@@ -6,7 +6,7 @@
 #include <ceres/rotation.h>
 
 template <typename CameraModel, typename T>
-inline bool WorldToPixel(const T* camera_params, const T* qvec, const T* tvec,
+inline void WorldToPixel(const T* camera_params, const T* qvec, const T* tvec,
                          const T* xyz, T* xy) {
   // Rotate and translate.
   T projection[3];
@@ -15,17 +15,12 @@ inline bool WorldToPixel(const T* camera_params, const T* qvec, const T* tvec,
   projection[1] += tvec[1];
   projection[2] += tvec[2];
 
-  if (projection[2] <= 0.0) {
-    return false;
-  }
-
   // Project to image plane.
   projection[0] /= projection[2];  // u
   projection[1] /= projection[2];  // v
 
   // Distort and transform to pixel space.
   CameraModel::WorldToImage(camera_params, projection[0], projection[1], &xy[0], &xy[1]);
-  return true;
 }
 
 template <typename T>
@@ -55,13 +50,10 @@ class BundleAdjustmentCost {
   template <typename T>
   bool operator()(const T* const qvec, const T* const tvec, const T* const point3D,
                   const T* const camera_params, T* residuals) const {
-    bool success =
-        WorldToPixel<CameraModel>(camera_params, qvec, tvec, point3D, residuals);
-    if (success) {
-      residuals[0] = T(scale_) * (residuals[0] - T(observed_x_));
-      residuals[1] = T(scale_) * (residuals[1] - T(observed_y_));
-    }
-    return success;
+    WorldToPixel<CameraModel>(camera_params, qvec, tvec, point3D, residuals);
+    residuals[0] = T(scale_) * (residuals[0] - T(observed_x_));
+    residuals[1] = T(scale_) * (residuals[1] - T(observed_y_));
+    return true;
   }
 
  private:
