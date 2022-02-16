@@ -162,37 +162,43 @@ void init_problem(py::module& m) {
       .def("num_residuals", &ceres::Problem::NumResiduals)
       .def("parameter_block_size", &ceres::Problem::ParameterBlockSize)
       .def("set_parameter_block_constant",
-           [](ceres::Problem& self, py::array_t<double>& np_arr) {
-             py::buffer_info info = np_arr.request();
+           [](ceres::Problem& self, py::array_t<double>& values) {
+             py::buffer_info info = values.request();
              THROW_CHECK(self.HasParameterBlock((double*)info.ptr));
              self.SetParameterBlockConstant((double*)info.ptr);
-           })
+           }, py::arg("values").noconvert())
       .def("set_parameter_block_variable",
-           [](ceres::Problem& self, py::array_t<double>& np_arr) {
-             py::buffer_info info = np_arr.request();
+           [](ceres::Problem& self, py::array_t<double>& values) {
+             py::buffer_info info = values.request();
              THROW_CHECK(self.HasParameterBlock((double*)info.ptr));
              self.SetParameterBlockVariable((double*)info.ptr);
-           })
+           }, py::arg("values").noconvert())
       .def("is_parameter_block_constant",
-           [](ceres::Problem& self, py::array_t<double>& np_arr) {
-             py::buffer_info info = np_arr.request();
+           [](ceres::Problem& self, py::array_t<double>& values) {
+             py::buffer_info info = values.request();
              THROW_CHECK(self.HasParameterBlock((double*)info.ptr));
              return self.IsParameterBlockConstant((double*)info.ptr);
-           })
+           }, py::arg("values").noconvert())
       .def("set_parameter_lower_bound",
-           [](ceres::Problem& self, py::array_t<double>& np_arr, int index,
+           [](ceres::Problem& self, py::array_t<double>& values, int index,
               double lower_bound) {
-             py::buffer_info info = np_arr.request();
+             py::buffer_info info = values.request();
              THROW_CHECK(self.HasParameterBlock((double*)info.ptr));
              self.SetParameterLowerBound((double*)info.ptr, index, lower_bound);
-           })
+           },
+           py::arg("values").noconvert(),
+           py::arg("index"),
+           py::arg("lower_bound"))
       .def("set_parameter_upper_bound",
-           [](ceres::Problem& self, py::array_t<double>& np_arr, int index,
+           [](ceres::Problem& self, py::array_t<double>& values, int index,
               double upper_bound) {
-             py::buffer_info info = np_arr.request();
+             py::buffer_info info = values.request();
              THROW_CHECK(self.HasParameterBlock((double*)info.ptr));
              self.SetParameterUpperBound((double*)info.ptr, index, upper_bound);
-           })
+           },
+           py::arg("values").noconvert(),
+           py::arg("index"),
+           py::arg("upper_bound"))
       // .def("get_parameter_lower_bound",
       //           [](ceres::Problem &self,
       //              py::array_t<double> &np_arr,
@@ -210,63 +216,42 @@ void init_problem(py::module& m) {
       //                                                  index);
       //           })
       .def("get_parameterization",
-           [](ceres::Problem& self, py::array_t<double>& np_arr) {
-             py::buffer_info info = np_arr.request();
+           [](ceres::Problem& self, py::array_t<double>& values) {
+             py::buffer_info info = values.request();
              THROW_CHECK(self.HasParameterBlock((double*)info.ptr));
              return self.GetParameterization((double*)info.ptr);
-           })
+           }, py::arg("values").noconvert())
       .def(
           "set_parameterization",
-          [](ceres::Problem& self, py::array_t<double>& np_arr,
+          [](ceres::Problem& self, py::array_t<double>& values,
              ceres::LocalParameterization* local_parameterization) {
-            py::buffer_info info = np_arr.request();
+            py::buffer_info info = values.request();
             THROW_CHECK(self.HasParameterBlock((double*)info.ptr));
             ceres::LocalParameterization* paramw =
                 new LocalParameterizationWrapper(local_parameterization);
             self.SetParameterization((double*)info.ptr, paramw);
           },
+          py::arg("values").noconvert(),
+          py::arg("local_parameterization"),
           py::keep_alive<1, 3>())  // LocalParameterization
       .def("parameter_block_size",
-           [](ceres::Problem& self, py::array_t<double>& np_arr) {
-             py::buffer_info info = np_arr.request();
+           [](ceres::Problem& self, py::array_t<double>& values) {
+             py::buffer_info info = values.request();
              THROW_CHECK(self.HasParameterBlock((double*)info.ptr));
              return self.ParameterBlockSize((double*)info.ptr);
-           })
+           }, py::arg("values").noconvert())
       .def("has_parameter_block",
-           [](ceres::Problem& self, py::array_t<double>& np_arr) {
-             py::buffer_info info = np_arr.request();
+           [](ceres::Problem& self, py::array_t<double>& values) {
+             py::buffer_info info = values.request();
              return self.HasParameterBlock((double*)info.ptr);
-           })
-      .def(
-          "add_residual_block",
-          [](ceres::Problem& self, ceres::CostFunction* cost,
-             std::shared_ptr<ceres::LossFunction> loss, py::args& params) {
-            THROW_CHECK_EQ(params.size(), cost->parameter_block_sizes().size());
-            std::vector<double*> pointer_values(params.size());
-            for (int i = 0; i < params.size(); i++) {
-              py::buffer_info param_buf =
-                  params[i].cast<py::array_t<double, py::array::c_style>>().request();
-              pointer_values[i] = static_cast<double*>(param_buf.ptr);
-              ssize_t num_dims = 1;
-              std::vector<ssize_t> param_shape = param_buf.shape;
-              for (int k = 0; k < param_shape.size(); k++) {
-                num_dims *= param_shape[k];
-              }
-              THROW_CHECK_EQ(num_dims, cost->parameter_block_sizes()[i]);
-            }
-            ceres::CostFunction* costw = new CostFunctionWrapper(cost);
-            return ResidualBlockIDWrapper(
-                self.AddResidualBlock(costw, loss.get(), pointer_values));
-          },
-          py::keep_alive<1, 2>(),  // Cost Function
-          py::keep_alive<1, 3>())  // Loss Function
+           }, py::arg("values").noconvert())
       .def(
           "add_residual_block",
           [](ceres::Problem& self, ceres::CostFunction* cost,
              std::shared_ptr<ceres::LossFunction> loss,
              std::vector<py::array_t<double>>& paramv) {
             THROW_CHECK_EQ(paramv.size(), cost->parameter_block_sizes().size());
-            std::vector<double*> pointer_values;
+            std::vector<double*> pointer_values(paramv.size());
             for (int i = 0; i < paramv.size(); ++i) {
               py::buffer_info param_buf = paramv[i].request();
               pointer_values[i] = static_cast<double*>(param_buf.ptr);
@@ -280,14 +265,15 @@ void init_problem(py::module& m) {
             ceres::CostFunction* costw = new CostFunctionWrapper(cost);
             return ResidualBlockIDWrapper(
                 self.AddResidualBlock(costw, loss.get(), pointer_values));
-          },
+          }, py::arg("cost"), py::arg("loss"), py::arg("paramv").noconvert(),
           py::keep_alive<1, 2>(),  // Cost Function
-          py::keep_alive<1, 3>())  // Loss Function
+          py::keep_alive<1, 3>(),
+          py::keep_alive<1, 4>())  // Loss Function
       .def("add_parameter_block",
            [](ceres::Problem& self, py::array_t<double>& values, int size) {
              double* pointer = static_cast<double*>(values.request().ptr);
              self.AddParameterBlock(pointer, size);
-           })
+           }, py::arg("values").noconvert(), py::arg("size"))
       .def(
           "add_parameter_block",
           [](ceres::Problem& self, py::array_t<double>& values, int size,
@@ -295,6 +281,8 @@ void init_problem(py::module& m) {
             double* pointer = static_cast<double*>(values.request().ptr);
             self.AddParameterBlock(pointer, size, local_parameterization);
           },
+          py::arg("values").noconvert(), py::arg("size"),
+          py::arg("local_parameterization"),
           py::keep_alive<1, 4>()  // LocalParameterization
           )
       .def("remove_parameter_block",
@@ -302,7 +290,7 @@ void init_problem(py::module& m) {
              double* pointer = static_cast<double*>(values.request().ptr);
              THROW_CHECK(self.HasParameterBlock(pointer));
              self.RemoveParameterBlock(pointer);
-           })
+           }, py::arg("values").noconvert())
       .def("remove_resdidual_block",
            [](ceres::Problem& self, ResidualBlockIDWrapper& residual_block_id) {
              self.RemoveResidualBlock(residual_block_id.id);
