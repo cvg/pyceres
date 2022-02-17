@@ -267,8 +267,8 @@ void init_problem(py::module& m) {
                 self.AddResidualBlock(costw, loss.get(), pointer_values));
           }, py::arg("cost"), py::arg("loss"), py::arg("paramv").noconvert(),
           py::keep_alive<1, 2>(),  // Cost Function
-          py::keep_alive<1, 3>(),
-          py::keep_alive<1, 4>())  // Loss Function
+          py::keep_alive<1, 3>(),  // Loss Function
+          py::keep_alive<1, 4>())  // Parameters
       .def("add_parameter_block",
            [](ceres::Problem& self, py::array_t<double>& values, int size) {
              double* pointer = static_cast<double*>(values.request().ptr);
