@@ -38,8 +38,8 @@ void init_covariance(py::module& m) {
              ceres::Problem& problem) {
             std::vector<std::pair<const double*, const double*>> pointer_values(blocks.size());
             for (int i = 0; i < blocks.size(); ++i) {
-              double* ptr1 = static_cast<double*>(blocks[i].first.request().ptr);
-              double* ptr2 = static_cast<double*>(blocks[i].second.request().ptr);
+              const double* ptr1 = static_cast<double*>(blocks[i].first.request().ptr);
+              const double* ptr2 = static_cast<double*>(blocks[i].second.request().ptr);
               THROW_CHECK(problem.HasParameterBlock(ptr1));
               THROW_CHECK(problem.HasParameterBlock(ptr2));
               pointer_values[i] = std::make_pair(ptr1, ptr2);
@@ -55,12 +55,14 @@ void init_covariance(py::module& m) {
              py::array_t<double>& block1,
              py::array_t<double>& block2
               ) -> py::object {
+            // Get shape of parameter 1
             py::buffer_info info1 = block1.request();
             ssize_t dim1 = 1;
             std::vector<ssize_t> shape1 = info1.shape;
             for (int k = 0; k < shape1.size(); k++) {
               dim1 *= shape1[k];
             }
+            // Get shape of parameter 2
             py::buffer_info info2 = block2.request();
             ssize_t dim2 = 1;
             std::vector<ssize_t> shape2 = info2.shape;
@@ -83,7 +85,7 @@ void init_covariance(py::module& m) {
               ) -> py::object {
             // Get buffer and raw pointer to block 1
             py::buffer_info info1 = block1.request();
-            double* ptr1 = static_cast<double*>(info1.ptr);
+            const double* ptr1 = static_cast<double*>(info1.ptr);
             // Use size of tangent space if local parameterization, otherwise get param shape
             const ceres::LocalParameterization* param1 = problem.GetParameterization(ptr1);
             ssize_t dim1 = 1;
@@ -95,9 +97,9 @@ void init_covariance(py::module& m) {
                   dim1 *= shape1[k];
                 }
             }
-            // Identicaly for block 2
+            // Identically for block 2
             py::buffer_info info2 = block2.request();
-            double* ptr2 = static_cast<double*>(info2.ptr);
+            const double* ptr2 = static_cast<double*>(info2.ptr);
             const ceres::LocalParameterization* param2 = problem.GetParameterization(ptr2);
             ssize_t dim2 = 1;
             if (param2 != nullptr) {
