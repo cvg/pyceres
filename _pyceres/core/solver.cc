@@ -28,24 +28,12 @@
 // Author: nikolausmitchell@gmail.com (Nikolaus Mitchell)
 // Edited by: philipp.lindenberger@math.ethz.ch (Philipp Lindenberger)
 #include <pybind11/pybind11.h>
-#include <thread>
 namespace py = pybind11;
 
 #include <ceres/ceres.h>
 
 #include "helpers.h"
 #include "log_exceptions.h"
-
-int GetEffectiveNumThreads(const int num_threads) {
-  int num_effective_threads = num_threads;
-  if (num_threads <= 0) {
-    num_effective_threads = std::thread::hardware_concurrency();
-  }
-  if (num_effective_threads <= 0) {
-    num_effective_threads = 1;
-  }
-  return num_effective_threads;
-}
 
 void init_solver(py::module& m) {
   m.def("solve",
