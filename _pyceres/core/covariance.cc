@@ -40,10 +40,11 @@ void init_covariance(py::module& m) {
               THROW_CHECK(problem.HasParameterBlock(ptr2));
               pointer_values.emplace_back(ptr1, ptr2);
             }
-            self.Compute(pointer_values, &problem);
+            py::gil_scoped_release release;
+            return self.Compute(pointer_values, &problem);
           },
           py::arg("blocks").noconvert(), py::arg("problem"), py::keep_alive<1, 2>(),
-          py::keep_alive<1, 3>(), py::call_guard<py::gil_scoped_release>())
+          py::keep_alive<1, 3>())
       .def(
           "get_covariance_block",
           [](ceres::Covariance& self, py::array_t<double>& block1,
