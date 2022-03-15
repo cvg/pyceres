@@ -33,6 +33,7 @@ namespace py = pybind11;
 
 #include "core/callbacks.cc"
 #include "core/cost_functions.cc"
+#include "core/covariance.cc"
 #include "core/loss_functions.cc"
 #include "core/parameterization.cc"
 #include "core/problem.cc"
@@ -41,6 +42,7 @@ namespace py = pybind11;
 
 void init_types(py::module& m);
 void init_callbacks(py::module& m);
+void init_covariance(py::module& m);
 void init_solver(py::module& m);
 void init_loss_functions(py::module& m);
 void init_cost_functions(py::module& m);
@@ -51,6 +53,7 @@ void init_pyceres(py::module& m);
 void bind_core(py::module& m) {
   init_types(m);
   init_callbacks(m);
+  init_covariance(m);
   init_solver(m);
   init_loss_functions(m);
   init_cost_functions(m);

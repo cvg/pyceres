@@ -4,6 +4,7 @@
 #include <iostream>
 #include <regex>
 #include <string>
+#include <thread>
 
 #include <pybind11/embed.h>
 #include <pybind11/eval.h>
@@ -176,4 +177,15 @@ inline void make_dataclass(py::class_<T> cls) {
     }
     return dict;
   });
+}
+
+int GetEffectiveNumThreads(const int num_threads) {
+  int num_effective_threads = num_threads;
+  if (num_threads <= 0) {
+    num_effective_threads = std::thread::hardware_concurrency();
+  }
+  if (num_effective_threads <= 0) {
+    num_effective_threads = 1;
+  }
+  return num_effective_threads;
 }
