@@ -46,7 +46,16 @@ void init_solver(py::module& m) {
       py::class_<ceres::Solver::Options>(m, "SolverOptions")
           .def(py::init<>())
           .def("IsValid", &s_options::IsValid)
-          .def_readwrite("callbacks", &s_options::callbacks)
+          .def_property(
+              "callbacks", [](const s_options& self) { return self.callbacks; },
+              py::cpp_function(
+                  [](s_options& self, py::list list) {
+                    std::vector<ceres::IterationCallback*> callbacks;
+                    for (auto& handle : list) {
+                      self.callbacks.push_back(handle.cast<ceres::IterationCallback*>());
+                    }
+                  },
+                  py::keep_alive<1, 2>()))
           .def_readwrite("minimizer_type", &s_options::minimizer_type)
           .def_readwrite("line_search_direction_type",
                          &s_options::line_search_direction_type)
