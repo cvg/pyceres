@@ -101,7 +101,8 @@ void init_covariance(py::module& m) {
               }
             }
             Eigen::Matrix<double, -1, -1, Eigen::RowMajor> covariance(dim1, dim2);
-            bool success = self.GetCovarianceBlock(ptr1, ptr2, covariance.data());
+            bool success = self.GetCovarianceBlockInTangentSpace(
+                ptr1, ptr2, covariance.data());
             return success ? py::cast(covariance) : py::none();
           },
           py::arg("block1").noconvert(), py::arg("block2").noconvert(),
