@@ -36,11 +36,13 @@ namespace py = pybind11;
 #include "helpers.h"
 #include "log_exceptions.h"
 
+#include "core/wrappers.cc"
+
 // Function to create Problem::Options with DO_NOT_TAKE_OWNERSHIP
 // This is cause we want Python to manage our memory not Ceres
 ceres::Problem::Options CreateProblemOptions() {
   ceres::Problem::Options o;
-  o.local_parameterization_ownership = ceres::Ownership::TAKE_OWNERSHIP;
+  o.manifold_ownership = ceres::Ownership::DO_NOT_TAKE_OWNERSHIP;
   o.loss_function_ownership = ceres::Ownership::DO_NOT_TAKE_OWNERSHIP;
   o.cost_function_ownership = ceres::Ownership::TAKE_OWNERSHIP;
   return o;
@@ -53,83 +55,6 @@ std::unique_ptr<ceres::Problem> CreatePythonProblem() {
   return std::unique_ptr<ceres::Problem>(new ceres::Problem(options));
 }
 
-// Wrapper around ceres ResidualBlockID. In Ceres a ResidualBlockId is
-// actually just a pointer to internal::ResidualBlock. However, since Ceres
-// uses a forward declaration we don't actually have the type definition.
-// (Ceres doesn't make it part of its public API). Since pybind11 needs a type
-// we use this class instead which simply holds the pointer.
-struct ResidualBlockIDWrapper {
- public:
-  ResidualBlockIDWrapper(const ceres::ResidualBlockId& id) : id(id) {}
-  const ceres::ResidualBlockId id;
-};
-
-// Same as FirstOrderFunctionWrapper
-class CostFunctionWrapper : public ceres::CostFunction {
- public:
-  explicit CostFunctionWrapper(ceres::CostFunction* real_cost_function)
-      : cost_function_(real_cost_function) {
-    this->set_num_residuals(cost_function_->num_residuals());
-    *(this->mutable_parameter_block_sizes()) = cost_function_->parameter_block_sizes();
-  }
-
-  bool Evaluate(double const* const* parameters, double* residuals,
-                double** jacobians) const override {
-    return cost_function_->Evaluate(parameters, residuals, jacobians);
-  }
-
- private:
-  ceres::CostFunction* cost_function_;
-};
-
-class LocalParameterizationWrapper : public ceres::LocalParameterization {
- public:
-  explicit LocalParameterizationWrapper(
-      ceres::LocalParameterization* real_parameterization)
-      : parameterization_(real_parameterization) {}
-  virtual ~LocalParameterizationWrapper() {}
-
-  // Generalization of the addition operation,
-  //
-  //   x_plus_delta = Plus(x, delta)
-  //
-  // with the condition that Plus(x, 0) = x.
-  bool Plus(const double* x, const double* delta, double* x_plus_delta) const override {
-    return parameterization_->Plus(x, delta, x_plus_delta);
-  }
-
-  // The jacobian of Plus(x, delta) w.r.t delta at delta = 0.
-  //
-  // jacobian is a row-major GlobalSize() x LocalSize() matrix.
-  bool ComputeJacobian(const double* x, double* jacobian) const override {
-    return parameterization_->ComputeJacobian(x, jacobian);
-  }
-
-  // local_matrix = global_matrix * jacobian
-  //
-  // global_matrix is a num_rows x GlobalSize  row major matrix.
-  // local_matrix is a num_rows x LocalSize row major matrix.
-  // jacobian(x) is the matrix returned by ComputeJacobian at x.
-  //
-  // This is only used by GradientProblem. For most normal uses, it is
-  // okay to use the default implementation.
-  bool MultiplyByJacobian(const double* x, const int num_rows,
-                          const double* global_matrix,
-                          double* local_matrix) const override {
-    return parameterization_->MultiplyByJacobian(x, num_rows, global_matrix,
-                                                 local_matrix);
-  }
-
-  // Size of x.
-  int GlobalSize() const override { return parameterization_->GlobalSize(); }
-
-  // Size of delta.
-  int LocalSize() const override { return parameterization_->LocalSize(); }
-
- private:
-  ceres::LocalParameterization* parameterization_;
-};
-
 void init_problem(py::module& m) {
   using options = ceres::Problem::Options;
   py::class_<ceres::Problem::Options>(m, "ProblemOptions")
@@ -137,8 +62,8 @@ void init_problem(py::module& m) {
                                              // Python manages memory
       .def_readonly("cost_function_ownership", &options::cost_function_ownership)
       .def_readonly("loss_function_ownership", &options::loss_function_ownership)
-      .def_readonly("local_parameterization_ownership",
-                    &options::local_parameterization_ownership)
+      .def_readonly("manifold_ownership",
+                    &options::manifold_ownership)
       .def_readwrite("enable_fast_removal", &options::enable_fast_removal)
       .def_readwrite("disable_all_safety_checks", &options::disable_all_safety_checks);
 
@@ -156,7 +81,7 @@ void init_problem(py::module& m) {
   py::class_<ceres::Problem>(m, "Problem")
       .def(py::init(&CreatePythonProblem))
       .def(py::init<ceres::Problem::Options>())
-      .def("num_parameter_bocks", &ceres::Problem::NumParameterBlocks)
+      .def("num_parameter_blocks", &ceres::Problem::NumParameterBlocks)
       .def("num_parameters", &ceres::Problem::NumParameters)
       .def("num_residual_blocks", &ceres::Problem::NumResidualBlocks)
       .def("num_residuals", &ceres::Problem::NumResiduals)
@@ -199,46 +124,58 @@ void init_problem(py::module& m) {
            py::arg("values").noconvert(),
            py::arg("index"),
            py::arg("upper_bound"))
-      // .def("get_parameter_lower_bound",
-      //           [](ceres::Problem &self,
-      //              py::array_t<double> &np_arr,
-      //              int index) {
-      //             py::buffer_info info = np_arr.request();
-      //             return self.GetParameterLowerBound((double *) info.ptr,
-      //                                                  index);
-      //           })
-      // .def("get_parameter_upper_bound",
-      //           [](ceres::Problem &self,
-      //              py::array_t<double> &np_arr,
-      //              int index) {
-      //             py::buffer_info info = np_arr.request();
-      //             return self.GetParameterUpperBound((double *) info.ptr,
-      //                                                  index);
-      //           })
-      .def("get_parameterization",
+      .def("get_parameter_lower_bound",
+                [](ceres::Problem &self,
+                   py::array_t<double> &np_arr,
+                   int index) {
+                  py::buffer_info info = np_arr.request();
+                  return self.GetParameterLowerBound((double *) info.ptr,
+                                                       index);
+                })
+      .def("get_parameter_upper_bound",
+                [](ceres::Problem &self,
+                   py::array_t<double> &np_arr,
+                   int index) {
+                  py::buffer_info info = np_arr.request();
+                  return self.GetParameterUpperBound((double *) info.ptr,
+                                                       index);
+                })
+      .def("has_manifold",
            [](ceres::Problem& self, py::array_t<double>& values) {
              py::buffer_info info = values.request();
              THROW_CHECK(self.HasParameterBlock((double*)info.ptr));
-             return self.GetParameterization((double*)info.ptr);
+             return self.HasManifold((double*)info.ptr);
+           }, py::arg("values").noconvert())
+      .def("get_manifold",
+           [](ceres::Problem& self, py::array_t<double>& values) {
+             py::buffer_info info = values.request();
+             THROW_CHECK(self.HasParameterBlock((double*)info.ptr));
+             return self.GetManifold((double*)info.ptr);
            }, py::arg("values").noconvert())
       .def(
-          "set_parameterization",
+          "set_manifold",
           [](ceres::Problem& self, py::array_t<double>& values,
-             ceres::LocalParameterization* local_parameterization) {
+             ceres::Manifold* manifold) {
             py::buffer_info info = values.request();
             THROW_CHECK(self.HasParameterBlock((double*)info.ptr));
-            ceres::LocalParameterization* paramw =
-                new LocalParameterizationWrapper(local_parameterization);
-            self.SetParameterization((double*)info.ptr, paramw);
+            ceres::Manifold* paramw =
+                new ManifoldWrapper(manifold);
+            self.SetManifold((double*)info.ptr, paramw);
           },
           py::arg("values").noconvert(),
-          py::arg("local_parameterization"),
+          py::arg("manifold"),
           py::keep_alive<1, 3>())  // LocalParameterization
       .def("parameter_block_size",
            [](ceres::Problem& self, py::array_t<double>& values) {
              py::buffer_info info = values.request();
              THROW_CHECK(self.HasParameterBlock((double*)info.ptr));
              return self.ParameterBlockSize((double*)info.ptr);
+           }, py::arg("values").noconvert())
+      .def("parameter_block_tangent_size",
+           [](ceres::Problem& self, py::array_t<double>& values) {
+             py::buffer_info info = values.request();
+             THROW_CHECK(self.HasParameterBlock((double*)info.ptr));
+             return self.ParameterBlockTangentSize((double*)info.ptr);
            }, py::arg("values").noconvert())
       .def("has_parameter_block",
            [](ceres::Problem& self, py::array_t<double>& values) {
@@ -277,12 +214,12 @@ void init_problem(py::module& m) {
       .def(
           "add_parameter_block",
           [](ceres::Problem& self, py::array_t<double>& values, int size,
-             ceres::LocalParameterization* local_parameterization) {
+             ceres::Manifold* manifold) {
             double* pointer = static_cast<double*>(values.request().ptr);
-            self.AddParameterBlock(pointer, size, local_parameterization);
+            self.AddParameterBlock(pointer, size, manifold);
           },
           py::arg("values").noconvert(), py::arg("size"),
-          py::arg("local_parameterization"),
+          py::arg("manifold"),
           py::keep_alive<1, 4>()  // LocalParameterization
           )
       .def("remove_parameter_block",
@@ -291,7 +228,7 @@ void init_problem(py::module& m) {
              THROW_CHECK(self.HasParameterBlock(pointer));
              self.RemoveParameterBlock(pointer);
            }, py::arg("values").noconvert())
-      .def("remove_resdidual_block",
+      .def("remove_residual_block",
            [](ceres::Problem& self, ResidualBlockIDWrapper& residual_block_id) {
              self.RemoveResidualBlock(residual_block_id.id);
            });

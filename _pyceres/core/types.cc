@@ -125,17 +125,19 @@ void init_types(py::module& m) {
   auto dlalt =
       py::enum_<ceres::DenseLinearAlgebraLibraryType>(m, "DenseLinearAlgebraLibraryType")
           .value("EIGEN", ceres::DenseLinearAlgebraLibraryType::EIGEN)
-          .value("LAPACK", ceres::DenseLinearAlgebraLibraryType::LAPACK);
+          .value("LAPACK", ceres::DenseLinearAlgebraLibraryType::LAPACK)
+          .value("CUDA", ceres::DenseLinearAlgebraLibraryType::CUDA);
   AddStringToEnumConstructor(dlalt);
 
   auto slalt =
       py::enum_<ceres::SparseLinearAlgebraLibraryType>(m,
                                                        "SparseLinearAlgebraLibraryType")
           .value("SUITE_SPARSE", ceres::SparseLinearAlgebraLibraryType::SUITE_SPARSE)
-          .value("CX_SPARSE", ceres::SparseLinearAlgebraLibraryType::CX_SPARSE)
           .value("EIGEN_SPARSE", ceres::SparseLinearAlgebraLibraryType::EIGEN_SPARSE)
-          // .value("ACCELERATE_SPARSE",
-          //         ceres::SparseLinearAlgebraLibraryType::ACCELERATE_SPARSE)
+          .value("ACCELERATE_SPARSE",
+                  ceres::SparseLinearAlgebraLibraryType::ACCELERATE_SPARSE)
+          .value("CUDA_SPARSE",
+                  ceres::SparseLinearAlgebraLibraryType::CUDA_SPARSE)
           .value("NO_SPARSE", ceres::SparseLinearAlgebraLibraryType::NO_SPARSE);
   AddStringToEnumConstructor(slalt);
 
