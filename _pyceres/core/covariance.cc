@@ -77,11 +77,11 @@ void init_covariance(py::module& m) {
             const double* ptr1 = static_cast<double*>(info1.ptr);
             // Use size of tangent space if local parameterization, otherwise get param
             // shape
-            const ceres::LocalParameterization* param1 =
-                problem.GetParameterization(ptr1);
+            const ceres::Manifold* param1 =
+                problem.GetManifold(ptr1);
             ssize_t dim1 = 1;
             if (param1 != nullptr) {
-              dim1 = param1->LocalSize();
+              dim1 = param1->TangentSize();
             } else {
               for (ssize_t s : info1.shape) {
                 dim1 *= s;
@@ -90,11 +90,11 @@ void init_covariance(py::module& m) {
             // Identically for block 2
             py::buffer_info info2 = block2.request();
             const double* ptr2 = static_cast<double*>(info2.ptr);
-            const ceres::LocalParameterization* param2 =
-                problem.GetParameterization(ptr2);
+            const ceres::Manifold* param2 =
+                problem.GetManifold(ptr2);
             ssize_t dim2 = 1;
             if (param2 != nullptr) {
-              dim2 = param2->LocalSize();
+              dim2 = param2->TangentSize();
             } else {
               for (ssize_t s : info2.shape) {
                 dim2 *= s;

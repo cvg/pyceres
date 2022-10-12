@@ -36,67 +36,70 @@ namespace py = pybind11;
 #include "helpers.h"
 #include "log_exceptions.h"
 
-class PyLocalParameterization : public ceres::LocalParameterization {
+class PyManifold : public ceres::Manifold {
   /* Inherit the constructors */
-  using ceres::LocalParameterization::LocalParameterization;
+  using ceres::Manifold::Manifold;
   bool Plus(const double* x, const double* delta, double* x_plus_delta) const override {
     THROW_EXCEPTION(std::runtime_error, "<Plus> not implemented.");
     return true;
   }
 
-  bool ComputeJacobian(const double* x, double* jacobian) const override {
-    THROW_EXCEPTION(std::runtime_error, "<Plus> not implemented.");
+  bool PlusJacobian(const double* x, double* jacobian) const override {
+    THROW_EXCEPTION(std::runtime_error, "<PlusJacobian> not implemented.");
   }
 
-  bool MultiplyByJacobian(const double* x, const int num_rows,
-                          const double* global_matrix,
-                          double* local_matrix) const override {
-    THROW_EXCEPTION(std::runtime_error, "<MultiplyByJacobian> not implemented.");
+  bool Minus(const double* y, const double* x, double* y_minus_x) const override {
+    THROW_EXCEPTION(std::runtime_error, "<Minus> not implemented.");
     return true;
   }
 
+  bool MinusJacobian(const double* x, double* jacobian) const override {
+    THROW_EXCEPTION(std::runtime_error, "<MinusJacobian> not implemented.");
+  }
+
   // Size of x.
-  int GlobalSize() const override {
+  int AmbientSize() const override {
     PYBIND11_OVERLOAD_PURE_NAME(
         int,                          /* Return type */
-        ceres::LocalParameterization, /* Parent class */
-        "global_size",                /* Name of python function */
-        GlobalSize /* Name of function in C++ (must match Python name) */
+        ceres::Manifold, /* Parent class */
+        "ambient_size",                /* Name of python function */
+        AmbientSize /* Name of function in C++ (must match Python name) */
     );
   }
 
   // Size of delta.
-  int LocalSize() const override {
+  int TangentSize() const override {
     PYBIND11_OVERLOAD_PURE_NAME(
         int,                          /* Return type */
-        ceres::LocalParameterization, /* Parent class */
-        "local_size",                 /* Name of python function */
-        LocalSize /* Name of function in C++ (must match Python name) */
+        ceres::Manifold, /* Parent class */
+        "tangent_size",                 /* Name of python function */
+        TangentSize /* Name of function in C++ (must match Python name) */
     );
   }
 };
 
 using namespace ceres;
 
-void init_parameterization(py::module& m) {
-  py::class_<LocalParameterization, PyLocalParameterization /* <--- trampoline*/>(
-      m, "LocalParameterization")
+void init_manifold(py::module& m) {
+  py::class_<Manifold, PyManifold /* <--- trampoline*/>(
+      m, "Manifold")
       .def(py::init<>())
-      .def("global_size", &LocalParameterization::GlobalSize)
-      .def("local_size", &LocalParameterization::LocalSize);
+      .def("ambient_size", &Manifold::AmbientSize)
+      .def("tangent_size", &Manifold::TangentSize);
 
-  py::class_<IdentityParameterization, LocalParameterization>(m,
-                                                              "IdentityParameterization")
+  py::class_<EuclideanManifold<DYNAMIC>, Manifold>(m,
+      "EuclideanManifold")
       .def(py::init<int>());
-  py::class_<QuaternionParameterization, LocalParameterization>(
-      m, "QuaternionParameterization")
-      .def(py::init<>());
-  py::class_<HomogeneousVectorParameterization, LocalParameterization>(
-      m, "HomogeneousVectorParameterization")
-      .def(py::init<int>());
-  py::class_<EigenQuaternionParameterization, LocalParameterization>(
-      m, "EigenQuaternionParameterization")
-      .def(py::init<>());
-  py::class_<SubsetParameterization, LocalParameterization>(m, "SubsetParameterization")
+  py::class_<SubsetManifold, Manifold>(m,
+      "SubsetManifold")
       .def(py::init<int, const std::vector<int>&>());
+  py::class_<QuaternionManifold, Manifold>(
+      m, "QuaternionManifold")
+      .def(py::init<>());
+  py::class_<EigenQuaternionManifold, Manifold>(
+      m, "EigenQuaternionManifold")
+      .def(py::init<>());
+  py::class_<SphereManifold<DYNAMIC>, Manifold>(
+      m, "SphereManifold")
+      .def(py::init<int>());
 }

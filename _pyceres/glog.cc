@@ -12,7 +12,6 @@ namespace py = pybind11;
 #include <thread>
 
 class glog_dummy {};  // dummy class
-
 // Issue #7: Glog version > 0.5.0 requires T=size_t, <= 0.5.0 T=int
 template <typename T>
 void PyBindLogStack(const char* data, T size) {
@@ -26,7 +25,8 @@ void PyBindLogStack(const char* data, T size) {
 
   std::cerr << data << std::endl;
   std::cerr << std::endl;
-  std::cerr << "ERROR: C++ code terminated. Kernel Died. See log files for details.";
+  std::cerr
+      << "ERROR: C++ code terminated. Kernel Died. See log files for details.";
   std::cerr << std::endl << std::endl << std::endl;
 }
 
@@ -40,7 +40,8 @@ void PyBindLogTermination() {
   std::this_thread::sleep_for(timespan);
 
   std::cerr << std::endl;
-  std::cerr << "ERROR: C++ code terminated. Kernel Died. See log files for details.";
+  std::cerr
+      << "ERROR: C++ code terminated. Kernel Died. See log files for details.";
   std::cerr << std::endl << std::endl << std::endl;
   exit(1);
 }
