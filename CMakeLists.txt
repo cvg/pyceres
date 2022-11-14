@@ -4,14 +4,15 @@ project(PyCeres)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Eigen3 3.3 REQUIRED)
-find_package(Ceres 2.1 REQUIRED)
+find_package(COLMAP REQUIRED)
 
-if(${CERES_VERSION} VERSION_LESS "2.2.0")
+if(${CERES_VERSION} VERSION_LESS "2.1.0")
+    message( SEND_ERROR "Ceres version >= 2.1 required." )
+elseif(${CERES_VERSION} VERSION_LESS "2.2.0")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 endif()
-find_package(COLMAP REQUIRED)
 
 set(PYCERES_INCLUDE_DIRS
     ${EIGEN3_INCLUDE_DIR}
