@@ -79,7 +79,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name='pyceres',
-    version='0.0.0',
+    version='1.0.0',
     author='Paul-Edouard Sarlin',
     author_email='psarlin@ethz.ch',
     description='Factor graph optimization from Ceres, in Python',
