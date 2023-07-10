@@ -1,5 +1,5 @@
-#include <colmap/base/camera_models.h>
-#include <colmap/base/projection.h>
+#include <colmap/camera/models.h>
+#include <colmap/geometry/projection.h>
 #include <colmap/util/types.h>
 
 #include <ceres/ceres.h>
