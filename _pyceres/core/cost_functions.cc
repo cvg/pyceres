@@ -124,6 +124,7 @@ void init_cost_functions(py::module& m) {
            })
       .def("parameter_block_sizes", &ceres::CostFunction::parameter_block_sizes,
            py::return_value_policy::reference)
+      .def("set_num_residuals", &PyCostFunction::set_num_residuals)
       .def("set_parameter_block_sizes",
            [](ceres::CostFunction& myself, std::vector<int32_t>& sizes) {
              for (auto s : sizes) {
