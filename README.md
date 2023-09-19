@@ -11,7 +11,7 @@ git clone --recursive git@github.com:cvg/pyceres.git
 cd pyceres
 ```
 
-2. Install [COLMAP](https://colmap.github.io/).
+2. Install [COLMAP 3.8](https://colmap.github.io/) - _make sure to use tag 3.8_.
 
 3. Build the package:
 
