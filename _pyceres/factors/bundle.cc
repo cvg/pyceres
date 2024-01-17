@@ -1,5 +1,5 @@
-#include <colmap/camera/models.h>
-#include <colmap/geometry/projection.h>
+#include <colmap/scene/projection.h>
+#include <colmap/sensor/models.h>
 #include <colmap/util/types.h>
 
 #include <ceres/ceres.h>
@@ -15,12 +15,9 @@ inline void WorldToPixel(const T* camera_params, const T* qvec, const T* tvec,
   projection[1] += tvec[1];
   projection[2] += tvec[2];
 
-  // Project to image plane.
-  projection[0] /= projection[2];  // u
-  projection[1] /= projection[2];  // v
-
   // Distort and transform to pixel space.
-  CameraModel::WorldToImage(camera_params, projection[0], projection[1], &xy[0], &xy[1]);
+  CameraModel::ImgFromCam(camera_params, projection[0], projection[1], projection[2],
+                          &xy[0], &xy[1]);
 }
 
 template <typename T>
@@ -43,7 +40,7 @@ class BundleAdjustmentCost {
   static ceres::CostFunction* Create(const Eigen::Vector2d& point2D,
                                      const double stddev) {
     return (new ceres::AutoDiffCostFunction<BundleAdjustmentCost<CameraModel>, 2, 4, 3, 3,
-                                            CameraModel::kNumParams>(
+                                            CameraModel::num_params>(
         new BundleAdjustmentCost(point2D, stddev)));
   }
 
@@ -78,7 +75,7 @@ class BundleAdjustmentConstantPoseCost : public BundleAdjustmentCost<CameraModel
                                      const Eigen::Vector4d qvec,
                                      const Eigen::Vector3d tvec) {
     return (new ceres::AutoDiffCostFunction<BundleAdjustmentConstantPoseCost<CameraModel>,
-                                            2, 3, CameraModel::kNumParams>(
+                                            2, 3, CameraModel::num_params>(
         new BundleAdjustmentConstantPoseCost(point2D, stddev, qvec, tvec)));
   }
 
@@ -111,7 +108,7 @@ class BundleAdjustmentConstantRigCost : public BundleAdjustmentCost<CameraModel>
                                      const Eigen::Vector4d rel_qvec,
                                      const Eigen::Vector3d rel_tvec) {
     return (new ceres::AutoDiffCostFunction<BundleAdjustmentConstantRigCost<CameraModel>,
-                                            2, 4, 3, 3, CameraModel::kNumParams>(
+                                            2, 4, 3, 3, CameraModel::num_params>(
         new BundleAdjustmentConstantRigCost(point2D, stddev, rel_qvec, rel_tvec)));
   }
 
@@ -144,7 +141,7 @@ class BundleAdjustmentRigCost : public BundleAdjustmentCost<CameraModel> {
   static ceres::CostFunction* Create(const Eigen::Vector2d& point2D,
                                      const double stddev) {
     return (new ceres::AutoDiffCostFunction<BundleAdjustmentRigCost<CameraModel>, 2, 4, 3,
-                                            4, 3, 3, CameraModel::kNumParams>(
+                                            4, 3, 3, CameraModel::num_params>(
         new BundleAdjustmentRigCost(point2D, stddev)));
   }
 
@@ -159,12 +156,12 @@ class BundleAdjustmentRigCost : public BundleAdjustmentCost<CameraModel> {
   }
 };
 
-ceres::CostFunction* CreateBundleAdjustmentCost(int camera_model_id,
-                                                const Eigen::Vector2d& point2D,
-                                                const double stddev) {
+ceres::CostFunction* CreateBundleAdjustmentCost(
+    const colmap::CameraModelId camera_model_id, const Eigen::Vector2d& point2D,
+    const double stddev) {
   switch (camera_model_id) {
 #define CAMERA_MODEL_CASE(CameraModel)                                         \
-  case colmap::CameraModel::kModelId:                                          \
+  case colmap::CameraModel::model_id:                                          \
     return BundleAdjustmentCost<colmap::CameraModel>::Create(point2D, stddev); \
     break;
     CAMERA_MODEL_SWITCH_CASES
@@ -173,11 +170,11 @@ ceres::CostFunction* CreateBundleAdjustmentCost(int camera_model_id,
 }
 
 ceres::CostFunction* CreateBundleAdjustmentConstantPoseCost(
-    int camera_model_id, const Eigen::Vector2d& point2D, const Eigen::Vector4d& qvec,
-    const Eigen::Vector3d& tvec, const double stddev) {
+    const colmap::CameraModelId camera_model_id, const Eigen::Vector2d& point2D,
+    const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec, const double stddev) {
   switch (camera_model_id) {
 #define CAMERA_MODEL_CASE(CameraModel)                                    \
-  case colmap::CameraModel::kModelId:                                     \
+  case colmap::CameraModel::model_id:                                     \
     return BundleAdjustmentConstantPoseCost<colmap::CameraModel>::Create( \
         point2D, stddev, qvec, tvec);                                     \
     break;
@@ -187,11 +184,12 @@ ceres::CostFunction* CreateBundleAdjustmentConstantPoseCost(
 }
 
 ceres::CostFunction* CreateBundleAdjustmentConstantRigCost(
-    int camera_model_id, const Eigen::Vector2d& point2D, const Eigen::Vector4d& rel_qvec,
-    const Eigen::Vector3d& rel_tvec, const double stddev) {
+    const colmap::CameraModelId camera_model_id, const Eigen::Vector2d& point2D,
+    const Eigen::Vector4d& rel_qvec, const Eigen::Vector3d& rel_tvec,
+    const double stddev) {
   switch (camera_model_id) {
 #define CAMERA_MODEL_CASE(CameraModel)                                   \
-  case colmap::CameraModel::kModelId:                                    \
+  case colmap::CameraModel::model_id:                                    \
     return BundleAdjustmentConstantRigCost<colmap::CameraModel>::Create( \
         point2D, stddev, rel_qvec, rel_tvec);                            \
     break;
@@ -200,12 +198,12 @@ ceres::CostFunction* CreateBundleAdjustmentConstantRigCost(
   }
 }
 
-ceres::CostFunction* CreateBundleAdjustmentRigCost(int camera_model_id,
-                                                   const Eigen::Vector2d& point2D,
-                                                   const double stddev) {
+ceres::CostFunction* CreateBundleAdjustmentRigCost(
+    const colmap::CameraModelId camera_model_id, const Eigen::Vector2d& point2D,
+    const double stddev) {
   switch (camera_model_id) {
 #define CAMERA_MODEL_CASE(CameraModel)                                            \
-  case colmap::CameraModel::kModelId:                                             \
+  case colmap::CameraModel::model_id:                                             \
     return BundleAdjustmentRigCost<colmap::CameraModel>::Create(point2D, stddev); \
     break;
     CAMERA_MODEL_SWITCH_CASES
