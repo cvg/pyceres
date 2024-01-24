@@ -11,12 +11,25 @@ git clone --recursive git@github.com:cvg/pyceres.git
 cd pyceres
 ```
 
-2. Install [COLMAP 3.8](https://colmap.github.io/) - _make sure to use tag 3.8_.
+2. Install [COLMAP 3.9.1](https://colmap.github.io/)
 
 3. Build the package:
 
 ```sh
 pip install -e .
+```
+
+### Docker image
+
+Alternatively, you can build the Docker image:
+
+```sh
+export COLMAP_VERSION=3.9.1
+export CUDA_ARCHITECTURES=70
+docker build -t pyceres \
+    --build-arg COLMAP_VERSION=${COLMAP_VERSION}  \
+    --build-arg CUDA_ARCHITECTURES=${CUDA_ARCHITECTURES}  \
+    -f Dockerfile .
 ```
 
 ## Factor graph optimization
