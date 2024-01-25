@@ -1,77 +1,45 @@
 #include <colmap/estimators/cost_functions.h>
-
-#include <colmap/scene/projection.h>
 #include <colmap/sensor/models.h>
-#include <colmap/util/types.h>
 
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
 
+#include "log_exceptions.h"
+
 using namespace colmap;
 
-template <typename CameraModel>
-class ReprojErrorCostFunctionWithNoise : public ReprojErrorCostFunction<CameraModel> {
-  using Parent = ReprojErrorCostFunction<CameraModel>;
-
+class LinearCostFunction : public ceres::CostFunction {
  public:
-  explicit ReprojErrorCostFunctionWithNoise(const Eigen::Vector2d& point2D,
-                                            const double stddev)
-      : Parent(point2D), scale_(1.0 / stddev) {}
-
-  static ceres::CostFunction* Create(const Eigen::Vector2d& point2D,
-                                     const double stddev) {
-    return (new ceres::AutoDiffCostFunction<ReprojErrorCostFunctionWithNoise<CameraModel>,
-                                            2, 4, 3, 3, CameraModel::num_params>(
-        new ReprojErrorCostFunctionWithNoise(point2D, stddev)));
+  LinearCostFunction(const double s) : s_(s) {
+    set_num_residuals(1);
+    mutable_parameter_block_sizes()->push_back(1);
   }
 
-  template <typename T>
-  bool operator()(const T* const cam_from_world_rotation,
-                  const T* const cam_from_world_translation, const T* const point3D,
-                  const T* const camera_params, T* residuals) const {
-    const bool ret =
-        Parent::operator()(cam_from_world_rotation, cam_from_world_translation, point3D,
-                           camera_params, residuals);
-    residuals[0] *= T(scale_);
-    residuals[1] *= T(scale_);
-    return ret;
+  bool Evaluate(double const* const* parameters, double* residuals,
+                double** jacobians) const final {
+    *residuals = **parameters * s_;
+    if (jacobians && *jacobians) {
+      **jacobians = s_;
+    }
+    return true;
   }
 
  private:
-  const double scale_;
+  const double s_;
 };
 
-template <typename CameraModel>
-class ReprojErrorConstantPoseCostFunctionWithNoise
-    : public ReprojErrorConstantPoseCostFunction<CameraModel> {
-  using Parent = ReprojErrorConstantPoseCostFunction<CameraModel>;
-
+template <class CostFunction, typename... Args>
+class CostFunctionIsotropicNoise {
  public:
-  explicit ReprojErrorConstantPoseCostFunctionWithNoise(
-      // const Eigen::Vector2d& point2D, const double* qvec, const double* tvec)
-      const Rigid3d& cam_from_world, const Eigen::Vector2d& point2D, const double stddev)
-      : Parent(cam_from_world, point2D), scale_(1.0 / stddev) {}
-
-  static ceres::CostFunction* Create(const Rigid3d& cam_from_world,
-                                     const Eigen::Vector2d& point2D,
-                                     const double stddev) {
-    return (new ceres::AutoDiffCostFunction<
-            ReprojErrorConstantPoseCostFunctionWithNoise<CameraModel>, 2, 3,
-            CameraModel::num_params>(new ReprojErrorConstantPoseCostFunctionWithNoise(
-        cam_from_world, point2D, stddev)));
+  static ceres::CostFunction* Create(Args&&... args, const double stddev) {
+    THROW_CHECK_GE(stddev, 0.0);
+    ceres::CostFunction* cost_function =
+        CostFunction::Create(std::forward<Args>(args)...);
+    std::vector<ceres::CostFunction*> conditioners(cost_function->num_residuals(),
+                                                   new LinearCostFunction(1.0 / stddev));
+    return new ceres::ConditionedCostFunction(cost_function, conditioners,
+                                              ceres::TAKE_OWNERSHIP);
   }
-
-  template <typename T>
-  bool operator()(const T* const point3D, const T* const camera_params,
-                  T* residuals) const {
-    const bool ret = Parent::operator()(point3D, camera_params, residuals);
-    residuals[0] *= T(scale_);
-    residuals[1] *= T(scale_);
-    return ret;
-  }
-
- private:
-  const double scale_;
 };
 
 template <typename CameraModel>
@@ -112,76 +80,24 @@ class RigReprojErrorConstantRigCostFunction
 };
 
 template <typename CameraModel>
-class RigReprojErrorConstantRigCostFunctionWithNoise
-    : public RigReprojErrorConstantRigCostFunction<CameraModel> {
-  using Parent = RigReprojErrorConstantRigCostFunction<CameraModel>;
-
- public:
-  explicit RigReprojErrorConstantRigCostFunctionWithNoise(const Rigid3d& cam_from_rig,
-                                                          const Eigen::Vector2d& point2D,
-                                                          const double stddev)
-      : Parent(cam_from_rig, point2D), scale_(1.0 / stddev) {}
-
-  static ceres::CostFunction* Create(const Rigid3d& cam_from_rig,
-                                     const Eigen::Vector2d& point2D,
-                                     const double stddev) {
-    return (new ceres::AutoDiffCostFunction<
-            RigReprojErrorConstantRigCostFunctionWithNoise<CameraModel>, 2, 4, 3, 3,
-            CameraModel::num_params>(new RigReprojErrorConstantRigCostFunctionWithNoise(
-        cam_from_rig, point2D, stddev)));
-  }
-
-  template <typename T>
-  bool operator()(const T* const rig_from_world_rotation,
-                  const T* const rig_from_world_translation, const T* const point3D,
-                  const T* const camera_params, T* residuals) const {
-    const bool ret =
-        Parent::operator()(rig_from_world_rotation, rig_from_world_translation, point3D,
-                           camera_params, residuals);
-    residuals[0] *= T(scale_);
-    residuals[1] *= T(scale_);
-    return ret;
-  }
-
- private:
-  const double scale_;
-};
+using ReprojErrorCostFunctionWithNoise =
+    CostFunctionIsotropicNoise<ReprojErrorCostFunction<CameraModel>,
+                               const Eigen::Vector2d&>;
 
 template <typename CameraModel>
-class RigReprojErrorCostFunctionWithNoise
-    : public RigReprojErrorCostFunction<CameraModel> {
-  using Parent = RigReprojErrorCostFunction<CameraModel>;
+using ReprojErrorConstantPoseCostFunctionWithNoise =
+    CostFunctionIsotropicNoise<ReprojErrorConstantPoseCostFunction<CameraModel>,
+                               const Rigid3d&, const Eigen::Vector2d&>;
 
- public:
-  explicit RigReprojErrorCostFunctionWithNoise(const Eigen::Vector2d& point2D,
-                                               const double stddev)
-      : Parent(point2D), scale_(1.0 / stddev) {}
+template <typename CameraModel>
+using RigReprojErrorCostFunctionWithNoise =
+    CostFunctionIsotropicNoise<RigReprojErrorCostFunction<CameraModel>,
+                               const Eigen::Vector2d&>;
 
-  static ceres::CostFunction* Create(const Eigen::Vector2d& point2D,
-                                     const double stddev) {
-    return (
-        new ceres::AutoDiffCostFunction<RigReprojErrorCostFunctionWithNoise<CameraModel>,
-                                        2, 4, 3, 4, 3, 3, CameraModel::num_params>(
-            new RigReprojErrorCostFunctionWithNoise(point2D, stddev)));
-  }
-
-  template <typename T>
-  bool operator()(const T* const cam_from_rig_rotation,
-                  const T* const cam_from_rig_translation,
-                  const T* const rig_from_world_rotation,
-                  const T* const rig_from_world_translation, const T* const point3D,
-                  const T* const camera_params, T* residuals) const {
-    const bool ret = Parent::operator()(
-        cam_from_rig_rotation, cam_from_rig_translation, rig_from_world_rotation,
-        rig_from_world_translation, point3D, camera_params, residuals);
-    residuals[0] *= T(scale_);
-    residuals[1] *= T(scale_);
-    return ret;
-  }
-
- private:
-  const double scale_;
-};
+template <typename CameraModel>
+using RigReprojErrorConstantRigCostFunctionWithNoise =
+    CostFunctionIsotropicNoise<RigReprojErrorConstantRigCostFunction<CameraModel>,
+                               const Rigid3d&, const Eigen::Vector2d&>;
 
 template <template <typename> class CostFunction, typename... Args>
 ceres::CostFunction* CreateCostFunction(const CameraModelId camera_model_id,
