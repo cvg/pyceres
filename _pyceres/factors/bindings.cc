@@ -11,35 +11,35 @@ namespace py = pybind11;
 using namespace colmap;
 
 void bind_factors(py::module& m) {
-  m.def("BundleAdjustmentCost",
+  m.def("ReprojErrorCost",
         &CreateCostFunction<ReprojErrorCostFunction, const Eigen::Vector2d&>,
         py::arg("camera_model_id"), py::arg("point2D"));
-  m.def("BundleAdjustmentCost",
+  m.def("ReprojErrorCost",
         &CreateCostFunction<ReprojErrorCostFunctionWithNoise, const Eigen::Vector2d&,
                             const double>,
         py::arg("camera_model_id"), py::arg("point2D"), py::arg("stddev"));
-  m.def("BundleAdjustmentCost",
+  m.def("ReprojErrorCost",
         &CreateCostFunction<ReprojErrorConstantPoseCostFunction, const Rigid3d&,
                             const Eigen::Vector2d&>,
         py::arg("camera_model_id"), py::arg("cam_from_world"), py::arg("point2D"));
-  m.def("BundleAdjustmentCost",
+  m.def("ReprojErrorCost",
         &CreateCostFunction<ReprojErrorConstantPoseCostFunctionWithNoise, const Rigid3d&,
                             const Eigen::Vector2d&, const double>,
         py::arg("camera_model_id"), py::arg("cam_from_world"), py::arg("point2D"),
         py::arg("stddev"));
 
-  m.def("BundleAdjustmentRigCost",
+  m.def("RigReprojErrorCost",
         &CreateCostFunction<RigReprojErrorCostFunction, const Eigen::Vector2d&>,
         py::arg("camera_model_id"), py::arg("point2D"));
-  m.def("BundleAdjustmentRigCost",
+  m.def("RigReprojErrorCost",
         &CreateCostFunction<RigReprojErrorCostFunctionWithNoise, const Eigen::Vector2d&,
                             const double>,
         py::arg("camera_model_id"), py::arg("point2D"), py::arg("stddev"));
-  m.def("BundleAdjustmentRigCost",
+  m.def("RigReprojErrorCost",
         &CreateCostFunction<RigReprojErrorConstantRigCostFunction, const Rigid3d&,
                             const Eigen::Vector2d&>,
         py::arg("camera_model_id"), py::arg("cam_from_rig"), py::arg("point2D"));
-  m.def("BundleAdjustmentRigCost",
+  m.def("RigReprojErrorCost",
         &CreateCostFunction<RigReprojErrorConstantRigCostFunctionWithNoise,
                             const Rigid3d&, const Eigen::Vector2d&, const double>,
         py::arg("camera_model_id"), py::arg("cam_from_rig"), py::arg("point2D"),
