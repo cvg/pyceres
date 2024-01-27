@@ -3,9 +3,9 @@
 #include <pybind11/stl.h>
 namespace py = pybind11;
 
-#include "factors/bundle.cc"
-#include "factors/common.cc"
-#include "factors/pose_graph.cc"
+#include "factors/bundle.h"
+#include "factors/common.h"
+#include "factors/pose_graph.h"
 #include "helpers.h"
 
 using namespace colmap;

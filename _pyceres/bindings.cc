@@ -4,9 +4,9 @@
 #include <pybind11/stl_bind.h>
 namespace py = pybind11;
 
-#include "core/bindings.cc"
-#include "factors/bindings.cc"
-#include "glog.cc"
+#include "core/bindings.h"
+#include "factors/bindings.h"
+#include "glog.h"
 #include "helpers.h"
 
 void bind_core(py::module&);

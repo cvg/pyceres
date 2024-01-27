@@ -31,14 +31,14 @@
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
 
-#include "core/callbacks.cc"
-#include "core/cost_functions.cc"
-#include "core/covariance.cc"
-#include "core/loss_functions.cc"
-#include "core/manifold.cc"
-#include "core/problem.cc"
-#include "core/solver.cc"
-#include "core/types.cc"
+#include "core/callbacks.h"
+#include "core/cost_functions.h"
+#include "core/covariance.h"
+#include "core/loss_functions.h"
+#include "core/manifold.h"
+#include "core/problem.h"
+#include "core/solver.h"
+#include "core/types.h"
 
 void init_types(py::module& m);
 void init_callbacks(py::module& m);
