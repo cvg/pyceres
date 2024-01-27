@@ -48,7 +48,6 @@ See the Jupyter notebooks in `examples/`.
 ## TODO
 - [ ] Define a clean interface for covariances, like in GTSAM
 - [ ] Add bindings for Ceres covariance estimation
-- [ ] Use proper objects for poses, e.g. from Sophus
 - [ ] Proper benchmark against GTSAM
 
 ## Credits
