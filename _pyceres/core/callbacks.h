@@ -27,11 +27,10 @@
 //
 // Author: nikolausmitchell@gmail.com (Nikolaus Mitchell)
 // Edited by: philipp.lindenberger@math.ethz.ch (Philipp Lindenberger)
+#include <ceres/ceres.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
-
-#include <ceres/ceres.h>
 
 namespace py = pybind11;
 
@@ -44,10 +43,11 @@ class PyEvaluationCallBack : public ceres::EvaluationCallback {
   void PrepareForEvaluation(bool evaluate_jacobians,
                             bool new_evaluation_point) override {
     PYBIND11_OVERLOAD_PURE(
-        void,                                    /* Return type */
-        ceres::EvaluationCallback,               /* Parent class */
-        PrepareForEvaluation,                    // Name of function in C++ (fn)
-        evaluate_jacobians, new_evaluation_point /* Argument(s) */
+        void,                      /* Return type */
+        ceres::EvaluationCallback, /* Parent class */
+        PrepareForEvaluation,      // Name of function in C++ (fn)
+        evaluate_jacobians,
+        new_evaluation_point /* Argument(s) */
     );
   }
 };

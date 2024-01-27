@@ -28,9 +28,6 @@
 // Author: nikolausmitchell@gmail.com (Nikolaus Mitchell)
 // Edited by: philipp.lindenberger@math.ethz.ch (Philipp Lindenberger)
 
-#include <pybind11/pybind11.h>
-namespace py = pybind11;
-
 #include "_pyceres/core/callbacks.h"
 #include "_pyceres/core/cost_functions.h"
 #include "_pyceres/core/covariance.h"
@@ -39,6 +36,10 @@ namespace py = pybind11;
 #include "_pyceres/core/problem.h"
 #include "_pyceres/core/solver.h"
 #include "_pyceres/core/types.h"
+
+#include <pybind11/pybind11.h>
+
+namespace py = pybind11;
 
 void bind_core(py::module& m) {
   init_types(m);

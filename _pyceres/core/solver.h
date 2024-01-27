@@ -27,17 +27,18 @@
 //
 // Author: nikolausmitchell@gmail.com (Nikolaus Mitchell)
 // Edited by: philipp.lindenberger@math.ethz.ch (Philipp Lindenberger)
-#include <pybind11/pybind11.h>
-namespace py = pybind11;
-
-#include <ceres/ceres.h>
-
 #include "_pyceres/helpers.h"
 #include "_pyceres/log_exceptions.h"
 
+#include <ceres/ceres.h>
+#include <pybind11/pybind11.h>
+
+namespace py = pybind11;
+
 void init_solver(py::module& m) {
   m.def("solve",
-        overload_cast_<const ceres::Solver::Options&, ceres::Problem*,
+        overload_cast_<const ceres::Solver::Options&,
+                       ceres::Problem*,
                        ceres::Solver::Summary*>()(&ceres::Solve),
         py::call_guard<py::gil_scoped_release>());
 
@@ -47,12 +48,14 @@ void init_solver(py::module& m) {
           .def(py::init<>())
           .def("IsValid", &s_options::IsValid)
           .def_property(
-              "callbacks", [](const s_options& self) { return self.callbacks; },
+              "callbacks",
+              [](const s_options& self) { return self.callbacks; },
               py::cpp_function(
                   [](s_options& self, py::list list) {
                     std::vector<ceres::IterationCallback*> callbacks;
                     for (auto& handle : list) {
-                      self.callbacks.push_back(handle.cast<ceres::IterationCallback*>());
+                      self.callbacks.push_back(
+                          handle.cast<ceres::IterationCallback*>());
                     }
                   },
                   py::keep_alive<1, 2>()))
@@ -86,14 +89,16 @@ void init_solver(py::module& m) {
           .def_readwrite("trust_region_strategy_type",
                          &s_options::trust_region_strategy_type)
           .def_readwrite("dogleg_type", &s_options::dogleg_type)
-          .def_readwrite("use_nonmonotonic_steps", &s_options::use_nonmonotonic_steps)
+          .def_readwrite("use_nonmonotonic_steps",
+                         &s_options::use_nonmonotonic_steps)
           .def_readwrite("max_consecutive_nonmonotonic_steps",
                          &s_options::max_consecutive_nonmonotonic_steps)
           .def_readwrite("max_num_iterations", &s_options::max_num_iterations)
           .def_readwrite("max_solver_time_in_seconds",
                          &s_options::max_solver_time_in_seconds)
           .def_property(
-              "num_threads", [](const s_options& self) { return self.num_threads; },
+              "num_threads",
+              [](const s_options& self) { return self.num_threads; },
               [](s_options& self, int n_threads) {
                 int effective_n_threads = GetEffectiveNumThreads(n_threads);
                 self.num_threads = effective_n_threads;
@@ -103,9 +108,12 @@ void init_solver(py::module& m) {
               })
           .def_readwrite("initial_trust_region_radius",
                          &s_options::initial_trust_region_radius)
-          .def_readwrite("max_trust_region_radius", &s_options::max_trust_region_radius)
-          .def_readwrite("min_trust_region_radius", &s_options::min_trust_region_radius)
-          .def_readwrite("min_relative_decrease", &s_options::min_relative_decrease)
+          .def_readwrite("max_trust_region_radius",
+                         &s_options::max_trust_region_radius)
+          .def_readwrite("min_trust_region_radius",
+                         &s_options::min_trust_region_radius)
+          .def_readwrite("min_relative_decrease",
+                         &s_options::min_relative_decrease)
           .def_readwrite("min_lm_diagonal", &s_options::min_lm_diagonal)
           .def_readwrite("max_lm_diagonal", &s_options::max_lm_diagonal)
           .def_readwrite("max_num_consecutive_invalid_steps",
@@ -126,7 +134,8 @@ void init_solver(py::module& m) {
           .def_readwrite("use_explicit_schur_complement",
                          &s_options::use_explicit_schur_complement)
           .def_readwrite("dynamic_sparsity", &s_options::dynamic_sparsity)
-          .def_readwrite("use_inner_iterations", &s_options::use_inner_iterations)
+          .def_readwrite("use_inner_iterations",
+                         &s_options::use_inner_iterations)
           .def_readwrite("inner_iteration_tolerance",
                          &s_options::inner_iteration_tolerance)
           .def_readwrite("min_linear_solver_iterations",
@@ -145,8 +154,9 @@ void init_solver(py::module& m) {
           .def_readwrite("check_gradients", &s_options::check_gradients)
           .def_readwrite("gradient_check_relative_precision",
                          &s_options::gradient_check_relative_precision)
-          .def_readwrite("gradient_check_numeric_derivative_relative_step_size",
-                         &s_options::gradient_check_numeric_derivative_relative_step_size)
+          .def_readwrite(
+              "gradient_check_numeric_derivative_relative_step_size",
+              &s_options::gradient_check_numeric_derivative_relative_step_size)
           .def_readwrite("update_state_every_iteration",
                          &s_options::update_state_every_iteration);
   make_dataclass(so);
@@ -164,50 +174,63 @@ void init_solver(py::module& m) {
           .def_readwrite("initial_cost", &s_summary::initial_cost)
           .def_readwrite("final_cost", &s_summary::final_cost)
           .def_readwrite("fixed_cost", &s_summary::fixed_cost)
-          .def_readwrite("num_successful_steps", &s_summary::num_successful_steps)
-          .def_readwrite("num_unsuccessful_steps", &s_summary::num_unsuccessful_steps)
+          .def_readwrite("num_successful_steps",
+                         &s_summary::num_successful_steps)
+          .def_readwrite("num_unsuccessful_steps",
+                         &s_summary::num_unsuccessful_steps)
           .def_readwrite("num_inner_iteration_steps",
                          &s_summary::num_inner_iteration_steps)
-          .def_readwrite("num_line_search_steps", &s_summary::num_line_search_steps)
+          .def_readwrite("num_line_search_steps",
+                         &s_summary::num_line_search_steps)
           .def_readwrite("preprocessor_time_in_seconds",
                          &s_summary::preprocessor_time_in_seconds)
           .def_readwrite("minimizer_time_in_seconds",
                          &s_summary::minimizer_time_in_seconds)
           .def_readwrite("postprocessor_time_in_seconds",
                          &s_summary::postprocessor_time_in_seconds)
-          .def_readwrite("total_time_in_seconds", &s_summary::total_time_in_seconds)
+          .def_readwrite("total_time_in_seconds",
+                         &s_summary::total_time_in_seconds)
           .def_readwrite("linear_solver_time_in_seconds",
                          &s_summary::linear_solver_time_in_seconds)
           .def_readwrite("num_linear_solves", &s_summary::num_linear_solves)
           .def_readwrite("residual_evaluation_time_in_seconds",
                          &s_summary::residual_evaluation_time_in_seconds)
-          .def_readwrite("num_residual_evaluations", &s_summary::num_residual_evaluations)
+          .def_readwrite("num_residual_evaluations",
+                         &s_summary::num_residual_evaluations)
           .def_readwrite("jacobian_evaluation_time_in_seconds",
                          &s_summary::jacobian_evaluation_time_in_seconds)
-          .def_readwrite("num_jacobian_evaluations", &s_summary::num_jacobian_evaluations)
+          .def_readwrite("num_jacobian_evaluations",
+                         &s_summary::num_jacobian_evaluations)
           .def_readwrite("inner_iteration_time_in_seconds",
                          &s_summary::inner_iteration_time_in_seconds)
-          .def_readwrite("line_search_cost_evaluation_time_in_seconds",
-                         &s_summary::line_search_cost_evaluation_time_in_seconds)
-          .def_readwrite("line_search_gradient_evaluation_time_in_seconds",
-                         &s_summary::line_search_gradient_evaluation_time_in_seconds)
-          .def_readwrite("line_search_polynomial_minimization_time_in_seconds",
-                         &s_summary::line_search_polynomial_minimization_time_in_seconds)
+          .def_readwrite(
+              "line_search_cost_evaluation_time_in_seconds",
+              &s_summary::line_search_cost_evaluation_time_in_seconds)
+          .def_readwrite(
+              "line_search_gradient_evaluation_time_in_seconds",
+              &s_summary::line_search_gradient_evaluation_time_in_seconds)
+          .def_readwrite(
+              "line_search_polynomial_minimization_time_in_seconds",
+              &s_summary::line_search_polynomial_minimization_time_in_seconds)
           .def_readwrite("line_search_total_time_in_seconds",
                          &s_summary::line_search_total_time_in_seconds)
-          .def_readwrite("num_parameter_blocks", &s_summary::num_parameter_blocks)
+          .def_readwrite("num_parameter_blocks",
+                         &s_summary::num_parameter_blocks)
           .def_readwrite("num_parameters", &s_summary::num_parameters)
-          .def_readwrite("num_effective_parameters", &s_summary::num_effective_parameters)
+          .def_readwrite("num_effective_parameters",
+                         &s_summary::num_effective_parameters)
           .def_readwrite("num_residual_blocks", &s_summary::num_residual_blocks)
           .def_readwrite("num_residuals", &s_summary::num_residuals)
           .def_readwrite("num_parameter_blocks_reduced",
                          &s_summary::num_parameter_blocks_reduced)
-          .def_readwrite("num_parameters_reduced", &s_summary::num_parameters_reduced)
+          .def_readwrite("num_parameters_reduced",
+                         &s_summary::num_parameters_reduced)
           .def_readwrite("num_effective_parameters_reduced",
                          &s_summary::num_effective_parameters_reduced)
           .def_readwrite("num_residual_blocks_reduced",
                          &s_summary::num_residual_blocks_reduced)
-          .def_readwrite("num_residuals_reduced", &s_summary::num_residuals_reduced)
+          .def_readwrite("num_residuals_reduced",
+                         &s_summary::num_residuals_reduced)
           .def_readwrite("is_constrained", &s_summary::is_constrained)
           .def_readwrite("num_threads_given", &s_summary::num_threads_given)
           .def_readwrite("num_threads_used", &s_summary::num_threads_used)
@@ -217,15 +240,22 @@ void init_solver(py::module& m) {
           .def_readwrite("num_linear_solver_threads_used",
                          &s_summary::num_linear_solver_threads_used)
 #endif
-          .def_readwrite("linear_solver_type_given", &s_summary::linear_solver_type_given)
-          .def_readwrite("linear_solver_type_used", &s_summary::linear_solver_type_used)
-          .def_readwrite("schur_structure_given", &s_summary::schur_structure_given)
-          .def_readwrite("schur_structure_used", &s_summary::schur_structure_used)
-          .def_readwrite("inner_iterations_given", &s_summary::inner_iterations_given)
-          .def_readwrite("inner_iterations_used", &s_summary::inner_iterations_used)
+          .def_readwrite("linear_solver_type_given",
+                         &s_summary::linear_solver_type_given)
+          .def_readwrite("linear_solver_type_used",
+                         &s_summary::linear_solver_type_used)
+          .def_readwrite("schur_structure_given",
+                         &s_summary::schur_structure_given)
+          .def_readwrite("schur_structure_used",
+                         &s_summary::schur_structure_used)
+          .def_readwrite("inner_iterations_given",
+                         &s_summary::inner_iterations_given)
+          .def_readwrite("inner_iterations_used",
+                         &s_summary::inner_iterations_used)
           .def_readwrite("preconditioner_type_given",
                          &s_summary::preconditioner_type_given)
-          .def_readwrite("preconditioner_type_used", &s_summary::preconditioner_type_used)
+          .def_readwrite("preconditioner_type_used",
+                         &s_summary::preconditioner_type_used)
           .def_readwrite("visibility_clustering_type",
                          &s_summary::visibility_clustering_type)
           .def_readwrite("trust_region_strategy_type",
@@ -266,9 +296,12 @@ void init_solver(py::module& m) {
                         &it_sum::line_search_function_evaluations)
           .def_readonly("line_search_gradient_evaluations",
                         &it_sum::line_search_gradient_evaluations)
-          .def_readonly("line_search_iterations", &it_sum::line_search_iterations)
-          .def_readonly("linear_solver_iterations", &it_sum::linear_solver_iterations)
-          .def_readonly("iteration_time_in_seconds", &it_sum::iteration_time_in_seconds)
+          .def_readonly("line_search_iterations",
+                        &it_sum::line_search_iterations)
+          .def_readonly("linear_solver_iterations",
+                        &it_sum::linear_solver_iterations)
+          .def_readonly("iteration_time_in_seconds",
+                        &it_sum::iteration_time_in_seconds)
           .def_readonly("step_solver_time_in_seconds",
                         &it_sum::step_solver_time_in_seconds)
           .def_readonly("cumulative_time_in_seconds",

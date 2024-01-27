@@ -1,13 +1,15 @@
+#include "_pyceres/core/bindings.h"
+
+#include "_pyceres/factors/bindings.h"
+#include "_pyceres/glog.h"
+#include "_pyceres/helpers.h"
+
 #include <pybind11/iostream.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
-namespace py = pybind11;
 
-#include "_pyceres/core/bindings.h"
-#include "_pyceres/factors/bindings.h"
-#include "_pyceres/glog.h"
-#include "_pyceres/helpers.h"
+namespace py = pybind11;
 
 PYBIND11_MODULE(pyceres, m) {
   m.doc() = "PyCeres";

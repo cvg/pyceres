@@ -28,19 +28,19 @@
 // Author: nikolausmitchell@gmail.com (Nikolaus Mitchell)
 // Edited by: philipp.lindenberger@math.ethz.ch (Philipp Lindenberger)
 
+#include "_pyceres/helpers.h"
+#include "_pyceres/log_exceptions.h"
+
 #include <string>
 
+#include <ceres/ceres.h>
 #include <pybind11/eigen.h>
 #include <pybind11/functional.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+
 namespace py = pybind11;
-
-#include <ceres/ceres.h>
-
-#include "_pyceres/helpers.h"
-#include "_pyceres/log_exceptions.h"
 
 // Trampoline class so that we can create a LossFunction in Python.
 class PyLossFunction : public ceres::LossFunction {
@@ -52,8 +52,8 @@ class PyLossFunction : public ceres::LossFunction {
     py::gil_scoped_acquire gil;
 
     py::array_t<double> out_arr(3, out, no_copy);
-    py::function overload =
-        py::get_overload(static_cast<const ceres::LossFunction*>(this), "Evaluate");
+    py::function overload = py::get_overload(
+        static_cast<const ceres::LossFunction*>(this), "Evaluate");
     if (overload) {
       overload.operator()(sq_norm, out_arr);
     } else {
@@ -92,8 +92,8 @@ ceres::LossFunction* CreateLossFunction(std::string loss_name,
 ceres::LossFunction* CreateScaledLossFunction(std::string loss_name,
                                               std::vector<double> scales,
                                               double magnitude) {
-  return new ceres::ScaledLoss(CreateLossFunction(loss_name, scales), magnitude,
-                               ceres::TAKE_OWNERSHIP);
+  return new ceres::ScaledLoss(
+      CreateLossFunction(loss_name, scales), magnitude, ceres::TAKE_OWNERSHIP);
 }
 
 std::shared_ptr<ceres::LossFunction> CreateLossFunctionFromDict(py::dict dict) {
@@ -104,17 +104,20 @@ std::shared_ptr<ceres::LossFunction> CreateLossFunctionFromDict(py::dict dict) {
     THROW_CHECK(dict.contains("params"));
   }
   if (dict.contains("magnitude")) {
-    return std::shared_ptr<ceres::LossFunction>(CreateScaledLossFunction(
-        dict["name"].cast<std::string>(), dict["params"].cast<std::vector<double>>(),
-        dict["magnitude"].cast<double>()));
+    return std::shared_ptr<ceres::LossFunction>(
+        CreateScaledLossFunction(dict["name"].cast<std::string>(),
+                                 dict["params"].cast<std::vector<double>>(),
+                                 dict["magnitude"].cast<double>()));
   } else {
-    return std::shared_ptr<ceres::LossFunction>(CreateLossFunction(
-        dict["name"].cast<std::string>(), dict["params"].cast<std::vector<double>>()));
+    return std::shared_ptr<ceres::LossFunction>(
+        CreateLossFunction(dict["name"].cast<std::string>(),
+                           dict["params"].cast<std::vector<double>>()));
   }
 }
 
 void init_loss_functions(py::module& m) {
-  py::class_<LossFunction, PyLossFunction /*<--- trampoline*/,
+  py::class_<LossFunction,
+             PyLossFunction /*<--- trampoline*/,
              std::shared_ptr<LossFunction>>(m, "LossFunction")
       .def(py::init<>())
       .def(py::init(&CreateLossFunctionFromDict))
@@ -125,15 +128,19 @@ void init_loss_functions(py::module& m) {
       });
   py::implicitly_convertible<py::dict, LossFunction>();
 
-  py::class_<TrivialLoss, LossFunction, std::shared_ptr<TrivialLoss>>(m, "TrivialLoss")
+  py::class_<TrivialLoss, LossFunction, std::shared_ptr<TrivialLoss>>(
+      m, "TrivialLoss")
       .def(py::init<>());
 
-  py::class_<HuberLoss, LossFunction, std::shared_ptr<HuberLoss>>(m, "HuberLoss")
+  py::class_<HuberLoss, LossFunction, std::shared_ptr<HuberLoss>>(m,
+                                                                  "HuberLoss")
       .def(py::init<double>());
 
-  py::class_<SoftLOneLoss, LossFunction, std::shared_ptr<SoftLOneLoss>>(m, "SoftLOneLoss")
+  py::class_<SoftLOneLoss, LossFunction, std::shared_ptr<SoftLOneLoss>>(
+      m, "SoftLOneLoss")
       .def(py::init<double>());
 
-  py::class_<CauchyLoss, LossFunction, std::shared_ptr<CauchyLoss>>(m, "CauchyLoss")
+  py::class_<CauchyLoss, LossFunction, std::shared_ptr<CauchyLoss>>(
+      m, "CauchyLoss")
       .def(py::init<double>());
 }
