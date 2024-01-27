@@ -4,19 +4,14 @@ This repository provides minimal Python bindings for the [Ceres Solver](http://c
 
 ## Installation
 
-1. Clone the repository and its submodule by running:
+1. Install [COLMAP 3.9.1](https://colmap.github.io/)
+
+2. Clone the repository and build the package:
 
 ```sh
-git clone --recursive git@github.com:cvg/pyceres.git
+git clone https://github.com/cvg/pyceres.git
 cd pyceres
-```
-
-2. Install [COLMAP 3.9.1](https://colmap.github.io/)
-
-3. Build the package:
-
-```sh
-pip install -e .
+python -m pip install .
 ```
 
 ### Docker image
