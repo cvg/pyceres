@@ -1,15 +1,17 @@
 // Author: Philipp Lindenberger (Phil26AT)
 
-#include <pybind11/iostream.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-namespace py = pybind11;
-
-#include <glog/logging.h>
+#pragma once
 
 #include <chrono>
 #include <iostream>
 #include <thread>
+
+#include <glog/logging.h>
+#include <pybind11/iostream.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
+namespace py = pybind11;
 
 class glog_dummy {};  // dummy class
 // Issue #7: Glog version > 0.5.0 requires T=size_t, <= 0.5.0 T=int
@@ -55,19 +57,24 @@ void init_glog(py::module& m) {
 
   py::class_<glog_dummy>(m, "glog")
       .def_property_static(
-          "minloglevel", [](py::object) { return FLAGS_minloglevel; },
+          "minloglevel",
+          [](py::object) { return FLAGS_minloglevel; },
           [](py::object, int a) { FLAGS_minloglevel = a; })
       .def_property_static(
-          "stderrthreshold", [](py::object) { return FLAGS_stderrthreshold; },
+          "stderrthreshold",
+          [](py::object) { return FLAGS_stderrthreshold; },
           [](py::object, int a) { FLAGS_stderrthreshold = a; })
       .def_property_static(
-          "log_dir", [](py::object) { return FLAGS_log_dir; },
+          "log_dir",
+          [](py::object) { return FLAGS_log_dir; },
           [](py::object, std::string a) { FLAGS_log_dir = a; })
       .def_property_static(
-          "logtostderr", [](py::object) { return FLAGS_logtostderr; },
+          "logtostderr",
+          [](py::object) { return FLAGS_logtostderr; },
           [](py::object, bool a) { FLAGS_logtostderr = a; })
       .def_property_static(
-          "alsologtostderr", [](py::object) { return FLAGS_alsologtostderr; },
+          "alsologtostderr",
+          [](py::object) { return FLAGS_alsologtostderr; },
           [](py::object, bool a) { FLAGS_alsologtostderr = a; })
       .def("init",
            [](std::string path) {

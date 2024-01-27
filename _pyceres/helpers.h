@@ -1,6 +1,9 @@
 // Author: Philipp Lindenberger (Phil26AT)
 
 #pragma once
+
+#include "_pyceres/log_exceptions.h"
+
 #include <iostream>
 #include <regex>
 #include <string>
@@ -13,8 +16,6 @@
 
 namespace py = pybind11;
 
-#include "log_exceptions.h"
-
 template <typename... Args>
 using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
 
@@ -25,8 +26,9 @@ inline T pyStringToEnum(const py::enum_<T>& enm, const std::string& value) {
   if (values.contains(strVal)) {
     return T(values[strVal].template cast<T>());
   }
-  std::string msg = "ERROR: Invalid string value " + value + " for enum " +
-                    std::string(enm.attr("__name__").template cast<std::string>());
+  std::string msg =
+      "ERROR: Invalid string value " + value + " for enum " +
+      std::string(enm.attr("__name__").template cast<std::string>());
   THROW_EXCEPTION(std::out_of_range, msg.c_str());
   T t;
   return t;
@@ -67,8 +69,10 @@ inline void make_dataclass(py::class_<T> cls) {
       } catch (const py::error_already_set& ex) {
         if (ex.matches(PyExc_TypeError)) {
           // If fail we try bases of the class
-          py::list bases =
-              self.attr(it.first).attr("__class__").attr("__bases__").cast<py::list>();
+          py::list bases = self.attr(it.first)
+                               .attr("__class__")
+                               .attr("__bases__")
+                               .cast<py::list>();
           bool success_on_base = false;
           for (auto& base : bases) {
             try {
@@ -84,11 +88,13 @@ inline void make_dataclass(py::class_<T> cls) {
           }
           std::stringstream ss;
           ss << cls.attr("__name__").template cast<std::string>() << "."
-             << py::str(it.first).template cast<std::string>() << ": Could not convert "
+             << py::str(it.first).template cast<std::string>()
+             << ": Could not convert "
              << py::type::of(it.second.cast<py::object>())
                     .attr("__name__")
                     .template cast<std::string>()
-             << ": " << py::str(it.second).template cast<std::string>() << " to '"
+             << ": " << py::str(it.second).template cast<std::string>()
+             << " to '"
              << py::type::of(self.attr(it.first))
                     .attr("__name__")
                     .template cast<std::string>()
@@ -96,15 +102,17 @@ inline void make_dataclass(py::class_<T> cls) {
           // We write the err message to give info even if exceptions
           // is catched outside, e.g. in function overload resolve
           std::cerr << "Internal TypeError: " << ss.str() << std::endl;
-          throw(py::type_error(std::string("Failed to merge dict into class: ") +
-                               "Could not assign " +
-                               py::str(it.first).template cast<std::string>()));
+          throw(
+              py::type_error(std::string("Failed to merge dict into class: ") +
+                             "Could not assign " +
+                             py::str(it.first).template cast<std::string>()));
         } else if (ex.matches(PyExc_AttributeError) &&
                    py::str(ex.value()).cast<std::string>() ==
                        std::string("can't set attribute")) {
           std::stringstream ss;
           ss << cls.attr("__name__").template cast<std::string>() << "."
-             << py::str(it.first).template cast<std::string>() << " defined readonly.";
+             << py::str(it.first).template cast<std::string>()
+             << " defined readonly.";
           throw py::attribute_error(ss.str());
         } else if (ex.matches(PyExc_AttributeError)) {
           std::cerr << "Internal AttributeError: "
@@ -129,7 +137,8 @@ inline void make_dataclass(py::class_<T> cls) {
           std::string attribute = py::str(handle);
           auto member = pyself.attr(attribute.c_str());
 
-          if (attribute.find("__") != 0 && attribute.rfind("__") == std::string::npos &&
+          if (attribute.find("__") != 0 &&
+              attribute.rfind("__") == std::string::npos &&
               !py::hasattr(member, "__func__")) {
             if (py::hasattr(member, "summary")) {
               std::string summ = member.attr("summary")
@@ -148,9 +157,12 @@ inline void make_dataclass(py::class_<T> cls) {
               ss << attribute;
               if (write_type) {
                 ss << ": "
-                   << py::type::of(member).attr("__name__").template cast<std::string>();
+                   << py::type::of(member)
+                          .attr("__name__")
+                          .template cast<std::string>();
               }
-              ss << " = " << py::str(member).template cast<std::string>() << "\n";
+              ss << " = " << py::str(member).template cast<std::string>()
+                 << "\n";
               after_subsummary = false;
             }
           }
@@ -165,11 +177,13 @@ inline void make_dataclass(py::class_<T> cls) {
     for (auto& handle : pyself.attr("__dir__")()) {
       std::string attribute = py::str(handle);
       auto member = pyself.attr(attribute.c_str());
-      if (attribute.find("__") != 0 && attribute.rfind("__") == std::string::npos &&
+      if (attribute.find("__") != 0 &&
+          attribute.rfind("__") == std::string::npos &&
           !py::hasattr(member, "__func__")) {
         if (py::hasattr(member, "todict")) {
-          dict[attribute.c_str()] =
-              member.attr("todict").attr("__call__")().template cast<py::dict>();
+          dict[attribute.c_str()] = member.attr("todict")
+                                        .attr("__call__")()
+                                        .template cast<py::dict>();
         } else {
           dict[attribute.c_str()] = member;
         }

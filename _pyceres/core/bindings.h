@@ -28,27 +28,20 @@
 // Author: nikolausmitchell@gmail.com (Nikolaus Mitchell)
 // Edited by: philipp.lindenberger@math.ethz.ch (Philipp Lindenberger)
 
+#pragma once
+
+#include "_pyceres/core/callbacks.h"
+#include "_pyceres/core/cost_functions.h"
+#include "_pyceres/core/covariance.h"
+#include "_pyceres/core/loss_functions.h"
+#include "_pyceres/core/manifold.h"
+#include "_pyceres/core/problem.h"
+#include "_pyceres/core/solver.h"
+#include "_pyceres/core/types.h"
+
 #include <pybind11/pybind11.h>
+
 namespace py = pybind11;
-
-#include "core/callbacks.cc"
-#include "core/cost_functions.cc"
-#include "core/covariance.cc"
-#include "core/loss_functions.cc"
-#include "core/manifold.cc"
-#include "core/problem.cc"
-#include "core/solver.cc"
-#include "core/types.cc"
-
-void init_types(py::module& m);
-void init_callbacks(py::module& m);
-void init_covariance(py::module& m);
-void init_solver(py::module& m);
-void init_loss_functions(py::module& m);
-void init_cost_functions(py::module& m);
-void init_manifold(py::module& m);
-void init_problem(py::module& m);
-void init_pyceres(py::module& m);
 
 void bind_core(py::module& m) {
   init_types(m);

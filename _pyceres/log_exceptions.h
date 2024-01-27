@@ -1,12 +1,12 @@
 // Author: Philipp Lindenberger (Phil26AT)
 
 #pragma once
+
 #include <exception>
 #include <sstream>
 #include <string>
 
 #include <colmap/util/misc.h>
-
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
@@ -51,34 +51,46 @@ inline std::string __MergeTwoConstChar(const char* expr1, const char* expr2) {
   return (std::string(expr1) + std::string(" ") + expr2);
 }
 
-inline void __ThrowCheckImpl(const char* file, const int line, const bool result,
+inline void __ThrowCheckImpl(const char* file,
+                             const int line,
+                             const bool result,
                              const char* expr_str) {
   if (!result) {
-    throw TemplateException<py::value_error>(file, line,
-                                             __GetCheckString(expr_str).c_str());
+    throw TemplateException<py::value_error>(
+        file, line, __GetCheckString(expr_str).c_str());
   }
 }
 
-inline void __ThrowCheckImplMsg(const char* file, const int line, const bool result,
-                                const char* expr_str, std::string msg) {
+inline void __ThrowCheckImplMsg(const char* file,
+                                const int line,
+                                const bool result,
+                                const char* expr_str,
+                                std::string msg) {
   if (!result) {
     std::stringstream ss;
     ss << expr_str << " : " << msg;
     std::string m = ss.str();
-    throw TemplateException<py::value_error>(file, line, __GetCheckString(m.c_str()));
+    throw TemplateException<py::value_error>(
+        file, line, __GetCheckString(m.c_str()));
   }
 }
 
 template <typename T1, typename T2>
-void __ThrowCheckOpImpl(const char* file, const int line, const bool result,
-                        const T1& val1, const T2& val2, const char* val1_str,
-                        const char* val2_str, const char* op_str) {
+void __ThrowCheckOpImpl(const char* file,
+                        const int line,
+                        const bool result,
+                        const T1& val1,
+                        const T2& val2,
+                        const char* val1_str,
+                        const char* val2_str,
+                        const char* op_str) {
   if (!result) {
     std::stringstream ss;
-    ss << val1_str << " " << op_str << " " << val2_str << " (" << val1 << " vs. " << val2
-       << ")";
+    ss << val1_str << " " << op_str << " " << val2_str << " (" << val1
+       << " vs. " << val2 << ")";
     std::string msg = ss.str();
-    throw TemplateException<py::value_error>(file, line, __GetCheckString(msg.c_str()));
+    throw TemplateException<py::value_error>(
+        file, line, __GetCheckString(msg.c_str()));
   }
 }
 
@@ -90,12 +102,14 @@ void __ThrowCheckOpImpl(const char* file, const int line, const bool result,
 #define THROW_CUSTOM_CHECK_MSG(condition, exception, msg) \
   if (!condition)                                         \
     throw TemplateException<exception>(                   \
-        __FILE__, __LINE__,                               \
+        __FILE__,                                         \
+        __LINE__,                                         \
         __GetCheckString(#condition) + std::string(" ") + ToString(msg));
 
 #define THROW_CUSTOM_CHECK(condition, exception) \
   if (!condition)                                \
-    throw TemplateException<exception>(__FILE__, __LINE__, __GetCheckString(#condition));
+    throw TemplateException<exception>(          \
+        __FILE__, __LINE__, __GetCheckString(#condition));
 
 #define THROW_CHECK(expr) __ThrowCheckImpl(__FILE__, __LINE__, (expr), #expr);
 
@@ -103,7 +117,8 @@ void __ThrowCheckOpImpl(const char* file, const int line, const bool result,
   __ThrowCheckImplMsg(__FILE__, __LINE__, (expr), #expr, ToString(msg))
 
 #define THROW_CHECK_OP(name, op, val1, val2) \
-  __ThrowCheckOpImpl(__FILE__, __LINE__, (val1 op val2), val1, val2, #val1, #val2, #op);
+  __ThrowCheckOpImpl(                        \
+      __FILE__, __LINE__, (val1 op val2), val1, val2, #val1, #val2, #op);
 
 #define THROW_CHECK_EQ(val1, val2) THROW_CHECK_OP(_EQ, ==, val1, val2)
 #define THROW_CHECK_NE(val1, val2) THROW_CHECK_OP(_NE, !=, val1, val2)
@@ -113,7 +128,9 @@ void __ThrowCheckOpImpl(const char* file, const int line, const bool result,
 #define THROW_CHECK_GT(val1, val2) THROW_CHECK_OP(_GT, >, val1, val2)
 
 #define THROW_CHECK_FILE_EXISTS(path) \
-  THROW_CHECK_MSG(ExistsFile(path), std::string("File ") + path + " does not exist.");
+  THROW_CHECK_MSG(ExistsFile(path),   \
+                  std::string("File ") + path + " does not exist.");
 
 #define THROW_CHECK_DIR_EXISTS(path) \
-  THROW_CHECK_MSG(ExistsDir(path), std::string("Directory ") + path + " does not exist.");
+  THROW_CHECK_MSG(ExistsDir(path),   \
+                  std::string("Directory ") + path + " does not exist.");
