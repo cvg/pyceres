@@ -1,4 +1,5 @@
 import numpy as np
+
 import pyceres
 
 
@@ -11,9 +12,9 @@ class HelloworldCostFunction(pyceres.CostFunction):
 
     def Evaluate(self, parameters, residuals, jacobians):
         x = parameters[0][0]
-        residuals[0] = 10. - x
+        residuals[0] = 10.0 - x
         if jacobians is not None:
-            jacobians[0][0] = -1.
+            jacobians[0][0] = -1.0
         return True
 
 
@@ -28,7 +29,7 @@ def test_python_cost():
     summary = pyceres.SolverSummary()
     pyceres.solve(options, prob, summary)
     print(summary.BriefReport())
-    print(f'{x_ori} -> {x}')
+    print(f"{x_ori} -> {x}")
 
 
 if __name__ == "__main__":
