@@ -1,210 +1,112 @@
-#include <colmap/scene/projection.h>
+#include <colmap/estimators/cost_functions.h>
+#include <colmap/geometry/rigid3.h>
 #include <colmap/sensor/models.h>
-#include <colmap/util/types.h>
 
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
 
-template <typename CameraModel, typename T>
-inline void WorldToPixel(const T* camera_params, const T* qvec, const T* tvec,
-                         const T* xyz, T* xy) {
-  // Rotate and translate.
-  T projection[3];
-  ceres::QuaternionRotatePoint(qvec, xyz, projection);
-  projection[0] += tvec[0];
-  projection[1] += tvec[1];
-  projection[2] += tvec[2];
+#include "log_exceptions.h"
 
-  // Distort and transform to pixel space.
-  CameraModel::ImgFromCam(camera_params, projection[0], projection[1], projection[2],
-                          &xy[0], &xy[1]);
-}
+using namespace colmap;
 
-template <typename T>
-inline void ComposePose(const T* qvec1, const T* tvec1, const T* qvec2, const T* tvec2,
-                        T* qvec_out, T* tvec_out) {
-  ceres::QuaternionProduct(qvec1, qvec2, qvec_out);
-  // Concatenate translations.
-  ceres::UnitQuaternionRotatePoint(qvec1, tvec2, tvec_out);
-  tvec_out[0] += tvec1[0];
-  tvec_out[1] += tvec1[1];
-  tvec_out[2] += tvec1[2];
-}
-
-template <typename CameraModel>
-class BundleAdjustmentCost {
+class LinearCostFunction : public ceres::CostFunction {
  public:
-  explicit BundleAdjustmentCost(const Eigen::Vector2d& point2D, const double stddev)
-      : observed_x_(point2D(0)), observed_y_(point2D(1)), scale_(1.0 / stddev) {}
-
-  static ceres::CostFunction* Create(const Eigen::Vector2d& point2D,
-                                     const double stddev) {
-    return (new ceres::AutoDiffCostFunction<BundleAdjustmentCost<CameraModel>, 2, 4, 3, 3,
-                                            CameraModel::num_params>(
-        new BundleAdjustmentCost(point2D, stddev)));
+  LinearCostFunction(const double s) : s_(s) {
+    set_num_residuals(1);
+    mutable_parameter_block_sizes()->push_back(1);
   }
 
-  template <typename T>
-  bool operator()(const T* const qvec, const T* const tvec, const T* const point3D,
-                  const T* const camera_params, T* residuals) const {
-    WorldToPixel<CameraModel>(camera_params, qvec, tvec, point3D, residuals);
-    residuals[0] = T(scale_) * (residuals[0] - T(observed_x_));
-    residuals[1] = T(scale_) * (residuals[1] - T(observed_y_));
+  bool Evaluate(double const* const* parameters, double* residuals,
+                double** jacobians) const final {
+    *residuals = **parameters * s_;
+    if (jacobians && *jacobians) {
+      **jacobians = s_;
+    }
     return true;
   }
 
  private:
-  const double observed_x_;
-  const double observed_y_;
-  const double scale_;
+  const double s_;
 };
 
-// TODO: can avoid one memory allocation if not inherited
+template <class CostFunction, typename... Args>
+class CostFunctionIsotropicNoise {
+ public:
+  static ceres::CostFunction* Create(Args&&... args, const double stddev) {
+    THROW_CHECK_GE(stddev, 0.0);
+    ceres::CostFunction* cost_function =
+        CostFunction::Create(std::forward<Args>(args)...);
+    std::vector<ceres::CostFunction*> conditioners(cost_function->num_residuals(),
+                                                   new LinearCostFunction(1.0 / stddev));
+    return new ceres::ConditionedCostFunction(cost_function, conditioners,
+                                              ceres::TAKE_OWNERSHIP);
+  }
+};
+
 template <typename CameraModel>
-class BundleAdjustmentConstantPoseCost : public BundleAdjustmentCost<CameraModel> {
-  using Parent = BundleAdjustmentCost<CameraModel>;
+class RigReprojErrorConstantRigCostFunction
+    : public ReprojErrorCostFunction<CameraModel> {
+  using Parent = ReprojErrorCostFunction<CameraModel>;
 
  public:
-  explicit BundleAdjustmentConstantPoseCost(
-      // const Eigen::Vector2d& point2D, const double* qvec, const double* tvec)
-      const Eigen::Vector2d& point2D, const double stddev, const Eigen::Vector4d& qvec,
-      const Eigen::Vector3d& tvec)
-      : Parent(point2D, stddev), qvec_(qvec), tvec_(tvec) {}
+  explicit RigReprojErrorConstantRigCostFunction(const Rigid3d& cam_from_rig,
+                                                 const Eigen::Vector2d& point2D)
+      : Parent(point2D), cam_from_rig_(cam_from_rig) {}
 
-  static ceres::CostFunction* Create(const Eigen::Vector2d& point2D, const double stddev,
-                                     const Eigen::Vector4d qvec,
-                                     const Eigen::Vector3d tvec) {
-    return (new ceres::AutoDiffCostFunction<BundleAdjustmentConstantPoseCost<CameraModel>,
-                                            2, 3, CameraModel::num_params>(
-        new BundleAdjustmentConstantPoseCost(point2D, stddev, qvec, tvec)));
+  static ceres::CostFunction* Create(const Rigid3d& cam_from_rig,
+                                     const Eigen::Vector2d& point2D) {
+    return (new ceres::AutoDiffCostFunction<
+            RigReprojErrorConstantRigCostFunction<CameraModel>, 2, 4, 3, 3,
+            CameraModel::num_params>(
+        new RigReprojErrorConstantRigCostFunction(cam_from_rig, point2D)));
   }
 
   template <typename T>
-  bool operator()(const T* const point3D, const T* const camera_params,
-                  T* residuals) const {
-    const Eigen::Matrix<T, 4, 1> qvec = qvec_.cast<T>();
-    const Eigen::Matrix<T, 3, 1> tvec = tvec_.cast<T>();
-    return Parent::operator()(qvec.data(), tvec.data(), point3D, camera_params,
+  bool operator()(const T* const rig_from_world_rotation,
+                  const T* const rig_from_world_translation, const T* const point3D,
+                  const T* const camera_params, T* residuals) const {
+    const Eigen::Quaternion<T> cam_from_world_rotation =
+        cam_from_rig_.rotation.cast<T>() * EigenQuaternionMap<T>(rig_from_world_rotation);
+    const Eigen::Matrix<T, 3, 1> cam_from_world_translation =
+        cam_from_rig_.rotation.cast<T>() *
+            EigenVector3Map<T>(rig_from_world_translation) +
+        cam_from_rig_.translation.cast<T>();
+    return Parent::operator()(cam_from_world_rotation.coeffs().data(),
+                              cam_from_world_translation.data(), point3D, camera_params,
                               residuals);
   }
 
  private:
-  const Eigen::Vector4d qvec_;
-  const Eigen::Vector3d tvec_;
+  const Rigid3d& cam_from_rig_;
 };
 
 template <typename CameraModel>
-class BundleAdjustmentConstantRigCost : public BundleAdjustmentCost<CameraModel> {
-  using Parent = BundleAdjustmentCost<CameraModel>;
-
- public:
-  explicit BundleAdjustmentConstantRigCost(const Eigen::Vector2d& point2D,
-                                           const double stddev,
-                                           const Eigen::Vector4d& rel_qvec,
-                                           const Eigen::Vector3d& rel_tvec)
-      : Parent(point2D, stddev), rel_qvec_(rel_qvec), rel_tvec_(rel_tvec) {}
-
-  static ceres::CostFunction* Create(const Eigen::Vector2d& point2D, const double stddev,
-                                     const Eigen::Vector4d rel_qvec,
-                                     const Eigen::Vector3d rel_tvec) {
-    return (new ceres::AutoDiffCostFunction<BundleAdjustmentConstantRigCost<CameraModel>,
-                                            2, 4, 3, 3, CameraModel::num_params>(
-        new BundleAdjustmentConstantRigCost(point2D, stddev, rel_qvec, rel_tvec)));
-  }
-
-  template <typename T>
-  bool operator()(const T* const rig_qvec, const T* const rig_tvec,
-                  const T* const point3D, const T* const camera_params,
-                  T* residuals) const {
-    const Eigen::Matrix<T, 4, 1> rel_qvec = rel_qvec_.cast<T>();
-    const Eigen::Matrix<T, 3, 1> rel_tvec = rel_tvec_.cast<T>();
-    T qvec[4], tvec[3];
-    ComposePose(rel_qvec.data(), rel_tvec.data(), rig_qvec, rig_tvec, qvec, tvec);
-    return Parent::operator()(qvec, tvec, point3D, camera_params, residuals);
-  }
-
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
- private:
-  const Eigen::Vector4d rel_qvec_;
-  const Eigen::Vector3d rel_tvec_;
-};
+using ReprojErrorCostFunctionWithNoise =
+    CostFunctionIsotropicNoise<ReprojErrorCostFunction<CameraModel>,
+                               const Eigen::Vector2d&>;
 
 template <typename CameraModel>
-class BundleAdjustmentRigCost : public BundleAdjustmentCost<CameraModel> {
-  using Parent = BundleAdjustmentCost<CameraModel>;
+using ReprojErrorConstantPoseCostFunctionWithNoise =
+    CostFunctionIsotropicNoise<ReprojErrorConstantPoseCostFunction<CameraModel>,
+                               const Rigid3d&, const Eigen::Vector2d&>;
 
- public:
-  explicit BundleAdjustmentRigCost(const Eigen::Vector2d& point2D, const double stddev)
-      : Parent(point2D, stddev) {}
+template <typename CameraModel>
+using RigReprojErrorCostFunctionWithNoise =
+    CostFunctionIsotropicNoise<RigReprojErrorCostFunction<CameraModel>,
+                               const Eigen::Vector2d&>;
 
-  static ceres::CostFunction* Create(const Eigen::Vector2d& point2D,
-                                     const double stddev) {
-    return (new ceres::AutoDiffCostFunction<BundleAdjustmentRigCost<CameraModel>, 2, 4, 3,
-                                            4, 3, 3, CameraModel::num_params>(
-        new BundleAdjustmentRigCost(point2D, stddev)));
-  }
+template <typename CameraModel>
+using RigReprojErrorConstantRigCostFunctionWithNoise =
+    CostFunctionIsotropicNoise<RigReprojErrorConstantRigCostFunction<CameraModel>,
+                               const Rigid3d&, const Eigen::Vector2d&>;
 
-  template <typename T>
-  bool operator()(const T* const rig_qvec, const T* const rig_tvec,
-                  const T* const rel_qvec, const T* const rel_tvec,
-                  const T* const point3D, const T* const camera_params,
-                  T* residuals) const {
-    T qvec[4], tvec[3];
-    ComposePose(rel_qvec, rel_tvec, rig_qvec, rig_tvec, qvec, tvec);
-    return Parent::operator()(qvec, tvec, point3D, camera_params, residuals);
-  }
-};
-
-ceres::CostFunction* CreateBundleAdjustmentCost(
-    const colmap::CameraModelId camera_model_id, const Eigen::Vector2d& point2D,
-    const double stddev) {
+template <template <typename> class CostFunction, typename... Args>
+ceres::CostFunction* CreateCostFunction(const CameraModelId camera_model_id,
+                                        Args&&... args) {
   switch (camera_model_id) {
-#define CAMERA_MODEL_CASE(CameraModel)                                         \
-  case colmap::CameraModel::model_id:                                          \
-    return BundleAdjustmentCost<colmap::CameraModel>::Create(point2D, stddev); \
-    break;
-    CAMERA_MODEL_SWITCH_CASES
-#undef CAMERA_MODEL_CASE
-  }
-}
-
-ceres::CostFunction* CreateBundleAdjustmentConstantPoseCost(
-    const colmap::CameraModelId camera_model_id, const Eigen::Vector2d& point2D,
-    const Eigen::Vector4d& qvec, const Eigen::Vector3d& tvec, const double stddev) {
-  switch (camera_model_id) {
-#define CAMERA_MODEL_CASE(CameraModel)                                    \
-  case colmap::CameraModel::model_id:                                     \
-    return BundleAdjustmentConstantPoseCost<colmap::CameraModel>::Create( \
-        point2D, stddev, qvec, tvec);                                     \
-    break;
-    CAMERA_MODEL_SWITCH_CASES
-#undef CAMERA_MODEL_CASE
-  }
-}
-
-ceres::CostFunction* CreateBundleAdjustmentConstantRigCost(
-    const colmap::CameraModelId camera_model_id, const Eigen::Vector2d& point2D,
-    const Eigen::Vector4d& rel_qvec, const Eigen::Vector3d& rel_tvec,
-    const double stddev) {
-  switch (camera_model_id) {
-#define CAMERA_MODEL_CASE(CameraModel)                                   \
-  case colmap::CameraModel::model_id:                                    \
-    return BundleAdjustmentConstantRigCost<colmap::CameraModel>::Create( \
-        point2D, stddev, rel_qvec, rel_tvec);                            \
-    break;
-    CAMERA_MODEL_SWITCH_CASES
-#undef CAMERA_MODEL_CASE
-  }
-}
-
-ceres::CostFunction* CreateBundleAdjustmentRigCost(
-    const colmap::CameraModelId camera_model_id, const Eigen::Vector2d& point2D,
-    const double stddev) {
-  switch (camera_model_id) {
-#define CAMERA_MODEL_CASE(CameraModel)                                            \
-  case colmap::CameraModel::model_id:                                             \
-    return BundleAdjustmentRigCost<colmap::CameraModel>::Create(point2D, stddev); \
+#define CAMERA_MODEL_CASE(CameraModel)                                     \
+  case CameraModel::model_id:                                              \
+    return CostFunction<CameraModel>::Create(std::forward<Args>(args)...); \
     break;
     CAMERA_MODEL_SWITCH_CASES
 #undef CAMERA_MODEL_CASE
