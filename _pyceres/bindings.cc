@@ -9,9 +9,6 @@ namespace py = pybind11;
 #include "glog.h"
 #include "helpers.h"
 
-void bind_core(py::module&);
-void bind_factors(py::module&);
-
 PYBIND11_MODULE(pyceres, m) {
   m.doc() = "PyCeres";
 

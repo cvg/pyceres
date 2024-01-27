@@ -40,16 +40,6 @@ namespace py = pybind11;
 #include "core/solver.h"
 #include "core/types.h"
 
-void init_types(py::module& m);
-void init_callbacks(py::module& m);
-void init_covariance(py::module& m);
-void init_solver(py::module& m);
-void init_loss_functions(py::module& m);
-void init_cost_functions(py::module& m);
-void init_manifold(py::module& m);
-void init_problem(py::module& m);
-void init_pyceres(py::module& m);
-
 void bind_core(py::module& m) {
   init_types(m);
   init_callbacks(m);
