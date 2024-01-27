@@ -5,7 +5,7 @@
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
 
-#include "log_exceptions.h"
+#include "_pyceres/log_exceptions.h"
 
 using namespace colmap;
 

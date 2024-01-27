@@ -3,8 +3,8 @@ namespace py = pybind11;
 
 #include <ceres/ceres.h>
 
-#include "helpers.h"
-#include "log_exceptions.h"
+#include "_pyceres/helpers.h"
+#include "_pyceres/log_exceptions.h"
 
 void init_covariance(py::module& m) {
   using c_options = ceres::Covariance::Options;

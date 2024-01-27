@@ -3,10 +3,10 @@
 #include <pybind11/stl.h>
 namespace py = pybind11;
 
-#include "factors/bundle.h"
-#include "factors/common.h"
-#include "factors/pose_graph.h"
-#include "helpers.h"
+#include "_pyceres/factors/bundle.h"
+#include "_pyceres/factors/common.h"
+#include "_pyceres/factors/pose_graph.h"
+#include "_pyceres/helpers.h"
 
 using namespace colmap;
 

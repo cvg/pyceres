@@ -33,8 +33,8 @@ namespace py = pybind11;
 
 #include <ceres/ceres.h>
 
-#include "helpers.h"
-#include "log_exceptions.h"
+#include "_pyceres/helpers.h"
+#include "_pyceres/log_exceptions.h"
 
 // Class which we can use to create a ceres::CostFunction in python.
 // This allows use to create python based cost functions.

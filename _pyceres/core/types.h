@@ -37,8 +37,8 @@ namespace py = pybind11;
 #include <ceres/ceres.h>
 #include <ceres/normal_prior.h>
 
-#include "helpers.h"
-#include "log_exceptions.h"
+#include "_pyceres/helpers.h"
+#include "_pyceres/log_exceptions.h"
 
 void init_types(py::module& m) {
   auto ownt = py::enum_<ceres::Ownership>(m, "Ownership")

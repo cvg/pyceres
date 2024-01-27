@@ -1,7 +1,7 @@
 #include <ceres/ceres.h>
 #include <ceres/normal_prior.h>
 
-#include "helpers.h"
+#include "_pyceres/helpers.h"
 
 ceres::CostFunction* CreateNormalPrior(const Eigen::VectorXd& mean,
                                        const Eigen::Matrix<double, -1, -1>& covariance) {

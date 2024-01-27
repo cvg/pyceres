@@ -33,10 +33,10 @@ namespace py = pybind11;
 
 #include <ceres/ceres.h>
 
-#include "helpers.h"
-#include "log_exceptions.h"
+#include "_pyceres/helpers.h"
+#include "_pyceres/log_exceptions.h"
 
-#include "core/wrappers.h"
+#include "_pyceres/core/wrappers.h"
 
 // Function to create Problem::Options with DO_NOT_TAKE_OWNERSHIP
 // This is cause we want Python to manage our memory not Ceres

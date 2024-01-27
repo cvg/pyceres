@@ -4,10 +4,10 @@
 #include <pybind11/stl_bind.h>
 namespace py = pybind11;
 
-#include "core/bindings.h"
-#include "factors/bindings.h"
-#include "glog.h"
-#include "helpers.h"
+#include "_pyceres/core/bindings.h"
+#include "_pyceres/factors/bindings.h"
+#include "_pyceres/glog.h"
+#include "_pyceres/helpers.h"
 
 PYBIND11_MODULE(pyceres, m) {
   m.doc() = "PyCeres";

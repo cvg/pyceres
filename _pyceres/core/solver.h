@@ -32,8 +32,8 @@ namespace py = pybind11;
 
 #include <ceres/ceres.h>
 
-#include "helpers.h"
-#include "log_exceptions.h"
+#include "_pyceres/helpers.h"
+#include "_pyceres/log_exceptions.h"
 
 void init_solver(py::module& m) {
   m.def("solve",

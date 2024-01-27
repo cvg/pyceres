@@ -13,7 +13,7 @@
 
 namespace py = pybind11;
 
-#include "log_exceptions.h"
+#include "_pyceres/log_exceptions.h"
 
 template <typename... Args>
 using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;

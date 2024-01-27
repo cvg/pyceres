@@ -39,8 +39,8 @@ namespace py = pybind11;
 
 #include <ceres/ceres.h>
 
-#include "helpers.h"
-#include "log_exceptions.h"
+#include "_pyceres/helpers.h"
+#include "_pyceres/log_exceptions.h"
 
 // Trampoline class so that we can create a LossFunction in Python.
 class PyLossFunction : public ceres::LossFunction {

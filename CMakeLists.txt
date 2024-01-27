@@ -18,7 +18,7 @@ find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(pybind11 2.11.1 REQUIRED)
 
 pybind11_add_module(pyceres _pyceres/bindings.cc)
-target_include_directories(pyceres PRIVATE ${PROJECT_SOURCE_DIR}/_pyceres)
+target_include_directories(pyceres PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries(pyceres PRIVATE colmap::colmap glog::glog Ceres::ceres)
 target_compile_definitions(pyceres PRIVATE VERSION_INFO="${PROJECT_VERSION}")
 install(TARGETS pyceres LIBRARY DESTINATION .)
