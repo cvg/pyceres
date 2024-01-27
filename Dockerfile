@@ -59,4 +59,4 @@ RUN wget "https://github.com/colmap/colmap/archive/refs/tags/${COLMAP_VERSION}.t
 # Build pyceres.
 COPY . /pyceres
 WORKDIR /pyceres
-RUN pip install . -vv
+RUN pip install . -vv --config-settings=cmake.define.CMAKE_CUDA_ARCHITECTURES=${CUDA_ARCHITECTURES}
