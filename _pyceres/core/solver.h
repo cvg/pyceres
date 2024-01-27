@@ -27,6 +27,9 @@
 //
 // Author: nikolausmitchell@gmail.com (Nikolaus Mitchell)
 // Edited by: philipp.lindenberger@math.ethz.ch (Philipp Lindenberger)
+
+#pragma once
+
 #include "_pyceres/helpers.h"
 #include "_pyceres/log_exceptions.h"
 

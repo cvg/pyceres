@@ -1,3 +1,5 @@
+#pragma once
+
 #include "_pyceres/factors/bundle.h"
 #include "_pyceres/factors/common.h"
 #include "_pyceres/factors/pose_graph.h"

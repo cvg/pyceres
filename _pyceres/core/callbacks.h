@@ -27,6 +27,9 @@
 //
 // Author: nikolausmitchell@gmail.com (Nikolaus Mitchell)
 // Edited by: philipp.lindenberger@math.ethz.ch (Philipp Lindenberger)
+
+#pragma once
+
 #include <ceres/ceres.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>

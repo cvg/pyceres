@@ -1,3 +1,5 @@
+#pragma once
+
 #include "_pyceres/helpers.h"
 #include "_pyceres/log_exceptions.h"
 

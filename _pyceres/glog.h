@@ -1,5 +1,7 @@
 // Author: Philipp Lindenberger (Phil26AT)
 
+#pragma once
+
 #include <chrono>
 #include <iostream>
 #include <thread>

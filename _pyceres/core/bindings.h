@@ -28,6 +28,8 @@
 // Author: nikolausmitchell@gmail.com (Nikolaus Mitchell)
 // Edited by: philipp.lindenberger@math.ethz.ch (Philipp Lindenberger)
 
+#pragma once
+
 #include "_pyceres/core/callbacks.h"
 #include "_pyceres/core/cost_functions.h"
 #include "_pyceres/core/covariance.h"

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "_pyceres/helpers.h"
 
 #include <ceres/ceres.h>

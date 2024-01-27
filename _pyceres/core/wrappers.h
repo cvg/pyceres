@@ -1,3 +1,5 @@
+#pragma once
+
 #include <ceres/ceres.h>
 
 // Wrapper around ceres ResidualBlockID. In Ceres a ResidualBlockId is
