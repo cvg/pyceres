@@ -45,10 +45,10 @@ void bind_factors(py::module& m) {
         py::arg("camera_model_id"), py::arg("cam_from_rig"), py::arg("point2D"),
         py::arg("stddev"));
 
-  m.def("PoseGraphRelativeCost", &PoseGraphRelativeCost::Create, py::arg("qvec_j_i"),
-        py::arg("tvec_j_i"), py::arg("covariance"));
-  m.def("PoseGraphAbsoluteCost", &PoseGraphAbsoluteCost::Create, py::arg("qvec_i_w"),
-        py::arg("tvec_i_w"), py::arg("covariance"));
+  m.def("PoseGraphRelativeCost", &PoseGraphRelativeCost::Create, py::arg("j_from_i"),
+        py::arg("covariance"));
+  m.def("PoseGraphAbsoluteCost", &PoseGraphAbsoluteCost::Create,
+        py::arg("cam_from_world"), py::arg("covariance"));
 
   m.def("NormalPrior", &CreateNormalPrior, py::arg("mean"), py::arg("covariance"));
 }
