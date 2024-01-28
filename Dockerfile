@@ -44,19 +44,51 @@ RUN apt-get install -y --no-install-recommends --no-install-suggests wget && \
     tar zxf ceres-solver-2.1.0.tar.gz && \
     mkdir ceres-build && \
     cd ceres-build && \
-    cmake ../ceres-solver-2.1.0 -GNinja && \
+    cmake ../ceres-solver-2.1.0 -GNinja \
+        -DCMAKE_INSTALL_PREFIX=/ceres_installed && \
     ninja install
+RUN cp -r /ceres_installed/* /usr/local/
 
 # Install Colmap.
 RUN wget "https://github.com/colmap/colmap/archive/refs/tags/${COLMAP_VERSION}.tar.gz" -O colmap-${COLMAP_VERSION}.tar.gz && \
     tar zxvf colmap-${COLMAP_VERSION}.tar.gz && \
     mkdir colmap-build && \
     cd colmap-build && \
-    cmake ../colmap-${COLMAP_VERSION} -GNinja -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCHITECTURES} && \
+    cmake ../colmap-${COLMAP_VERSION} -GNinja \
+        -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCHITECTURES} \
+        -DCMAKE_INSTALL_PREFIX=/colmap_installed && \
     ninja install
-
+RUN cp -r /colmap_installed/* /usr/local/
 
 # Build pyceres.
-COPY . /pyceres
+RUN git clone --depth 1 --recursive https://github.com/cvg/pyceres
 WORKDIR /pyceres
-RUN pip install . -vv --config-settings=cmake.define.CMAKE_CUDA_ARCHITECTURES=${CUDA_ARCHITECTURES}
+RUN pip wheel --no-deps -w dist-wheel . -vv && \
+    whl_path=$(find dist-wheel/ -name "*.whl") && \
+    echo $whl_path >dist-wheel/whl_path.txt
+
+
+#
+# Runtime stage.
+#
+FROM nvidia/cuda:${NVIDIA_CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION} as runtime
+
+# Install minimal runtime dependencies.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends --no-install-suggests \
+        libgoogle-glog0v5 \
+        python-is-python3 \
+        python3-minimal \
+        python3-pip
+
+# Copy installed libraries in builder stage.
+COPY --from=builder /ceres_installed/ /usr/local/
+COPY --from=builder /colmap_installed/ /usr/local/
+
+# Install pyceres.
+COPY --from=builder /pyceres/dist-wheel /tmp/dist-wheel
+RUN cd /tmp && whl_path=$(cat dist-wheel/whl_path.txt) && pip install $whl_path
+RUN rm -rfv /tmp/*
+
+# Verify if pyceres library is accessible from python.
+RUN python -c "import pyceres"
