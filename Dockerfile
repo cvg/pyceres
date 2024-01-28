@@ -61,9 +61,10 @@ RUN wget "https://github.com/colmap/colmap/archive/refs/tags/${COLMAP_VERSION}.t
 RUN cp -r /colmap_installed/* /usr/local/
 
 # Build pyceres.
-RUN git clone --depth 1 --recursive https://github.com/cvg/pyceres
+ADD . /pyceres
 WORKDIR /pyceres
-RUN pip wheel --no-deps -w dist-wheel . -vv && \
+RUN pip install --upgrade pip
+RUN pip wheel . --no-deps -w dist-wheel -vv --config-settings=cmake.define.CMAKE_CUDA_ARCHITECTURES=${CUDA_ARCHITECTURES} && \
     whl_path=$(find dist-wheel/ -name "*.whl") && \
     echo $whl_path >dist-wheel/whl_path.txt
 
