@@ -8,7 +8,7 @@
 
 namespace py = pybind11;
 
-void init_covariance(py::module& m) {
+void BindCovariance(py::module& m) {
   using c_options = ceres::Covariance::Options;
   auto co = py::class_<ceres::Covariance::Options>(m, "CovarianceOptions")
                 .def(py::init<>())

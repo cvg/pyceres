@@ -26,7 +26,7 @@ std::unique_ptr<ceres::Problem> CreatePythonProblem() {
   return std::unique_ptr<ceres::Problem>(new ceres::Problem(options));
 }
 
-void init_problem(py::module& m) {
+void BindProblem(py::module& m) {
   using options = ceres::Problem::Options;
   py::class_<ceres::Problem::Options>(m, "ProblemOptions")
       .def(py::init(&CreateProblemOptions))  // Ensures default is that

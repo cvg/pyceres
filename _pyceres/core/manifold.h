@@ -56,7 +56,7 @@ class PyManifold : public ceres::Manifold {
 
 using namespace ceres;
 
-void init_manifold(py::module& m) {
+void BindManifold(py::module& m) {
   py::class_<Manifold, PyManifold /* <--- trampoline*/>(m, "Manifold")
       .def(py::init<>())
       .def("ambient_size", &Manifold::AmbientSize)

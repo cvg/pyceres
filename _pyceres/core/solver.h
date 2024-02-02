@@ -8,7 +8,7 @@
 
 namespace py = pybind11;
 
-void init_solver(py::module& m) {
+void BindSolver(py::module& m) {
   m.def("solve",
         overload_cast_<const ceres::Solver::Options&,
                        ceres::Problem*,

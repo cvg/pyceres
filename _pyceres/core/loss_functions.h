@@ -87,7 +87,7 @@ std::shared_ptr<ceres::LossFunction> CreateLossFunctionFromDict(py::dict dict) {
   }
 }
 
-void init_loss_functions(py::module& m) {
+void BindLossFunctions(py::module& m) {
   py::class_<LossFunction,
              PyLossFunction /*<--- trampoline*/,
              std::shared_ptr<LossFunction>>(m, "LossFunction")

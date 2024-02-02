@@ -13,13 +13,13 @@
 
 namespace py = pybind11;
 
-void bind_core(py::module& m) {
-  init_types(m);
-  init_callbacks(m);
-  init_covariance(m);
-  init_solver(m);
-  init_loss_functions(m);
-  init_cost_functions(m);
-  init_manifold(m);
-  init_problem(m);
+void BindCore(py::module& m) {
+  BindTypes(m);
+  BindCallbacks(m);
+  BindCovariance(m);
+  BindSolver(m);
+  BindLossFunctions(m);
+  BindCostFunctions(m);
+  BindManifold(m);
+  BindProblem(m);
 }

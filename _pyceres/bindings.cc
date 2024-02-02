@@ -1,8 +1,8 @@
 #include "_pyceres/core/bindings.h"
 
 #include "_pyceres/factors/bindings.h"
-#include "_pyceres/glog.h"
 #include "_pyceres/helpers.h"
+#include "_pyceres/logging.h"
 
 #include <pybind11/iostream.h>
 #include <pybind11/pybind11.h>
@@ -12,12 +12,13 @@
 namespace py = pybind11;
 
 PYBIND11_MODULE(pyceres, m) {
-  m.doc() = "PyCeres";
+  m.doc() = "PyCeres - Python bindings for the Ceres solver.";
+  m.attr("__version__") = py::str(VERSION_INFO);
 
   py::add_ostream_redirect(m, "ostream_redirect");
-  init_glog(m);
-  bind_core(m);
+  BindLogging(m);
+  BindCore(m);
 
   py::module_ f = m.def_submodule("factors");
-  bind_factors(f);
+  BindFactors(f);
 }

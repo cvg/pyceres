@@ -46,7 +46,7 @@ __attribute__((noreturn)) void PyBindLogTermination() {
   exit(1);
 }
 
-void init_glog(py::module& m) {
+void BindLogging(py::module& m) {
   // google::InstallFailureSignalHandler();
   // google::InitGoogleLogging("");
   // google::InstallFailureFunction(&PyBindLogTermination); //Important to warn

@@ -9,7 +9,7 @@
 
 namespace py = pybind11;
 
-void bind_factors(py::module& m) {
+void BindFactors(py::module& m) {
   m.def(
       "NormalPrior",
       [](const Eigen::VectorXd& mean,

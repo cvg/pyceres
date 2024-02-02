@@ -12,7 +12,7 @@
 
 namespace py = pybind11;
 
-void init_types(py::module& m) {
+void BindTypes(py::module& m) {
   auto ownt = py::enum_<ceres::Ownership>(m, "Ownership")
                   .value("DO_NOT_TAKE_OWNERSHIP",
                          ceres::Ownership::DO_NOT_TAKE_OWNERSHIP)
