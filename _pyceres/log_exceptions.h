@@ -4,7 +4,6 @@
 #include <sstream>
 #include <string>
 
-#include <colmap/util/misc.h>
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
@@ -124,11 +123,3 @@ void __ThrowCheckOpImpl(const char* file,
 #define THROW_CHECK_LT(val1, val2) THROW_CHECK_OP(_LT, <, val1, val2)
 #define THROW_CHECK_GE(val1, val2) THROW_CHECK_OP(_GE, >=, val1, val2)
 #define THROW_CHECK_GT(val1, val2) THROW_CHECK_OP(_GT, >, val1, val2)
-
-#define THROW_CHECK_FILE_EXISTS(path) \
-  THROW_CHECK_MSG(ExistsFile(path),   \
-                  std::string("File ") + path + " does not exist.");
-
-#define THROW_CHECK_DIR_EXISTS(path) \
-  THROW_CHECK_MSG(ExistsDir(path),   \
-                  std::string("Directory ") + path + " does not exist.");
