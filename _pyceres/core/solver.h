@@ -128,7 +128,7 @@ void BindSolver(py::module& m) {
           &Options::gradient_check_numeric_derivative_relative_step_size)
       .def_readwrite("update_state_every_iteration",
                      &Options::update_state_every_iteration);
-  make_dataclass(PyOptions);
+  MakeDataclass(PyOptions);
 
   using Summary = ceres::Solver::Summary;
   py::class_<Summary> PySummary(m, "SolverSummary");
@@ -228,7 +228,7 @@ void BindSolver(py::module& m) {
       .def_readwrite("nonlinear_conjugate_gradient_type",
                      &Summary::nonlinear_conjugate_gradient_type)
       .def_readwrite("max_lbfgs_rank", &Summary::max_lbfgs_rank);
-  make_dataclass(PySummary);
+  MakeDataclass(PySummary);
 
   using IterSummary = ceres::IterationSummary;
   py::class_<IterSummary> PyIterSummary(m, "IterationSummary");

@@ -26,7 +26,7 @@ void BindCovariance(py::module& m) {
                      &Options::min_reciprocal_condition_number)
       .def_readwrite("null_space_rank", &Options::null_space_rank)
       .def_readwrite("apply_loss_function", &Options::apply_loss_function);
-  make_dataclass(PyOptions);
+  MakeDataclass(PyOptions);
 
   py::class_<ceres::Covariance>(m, "Covariance")
       .def(py::init<ceres::Covariance::Options>())
