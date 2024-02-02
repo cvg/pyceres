@@ -14,9 +14,6 @@
 
 namespace py = pybind11;
 
-template <typename... Args>
-using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
-
 template <typename T>
 inline T pyStringToEnum(const py::enum_<T>& enm, const std::string& value) {
   auto values = enm.attr("__members__").template cast<py::dict>();
