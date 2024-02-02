@@ -46,4 +46,4 @@ See the Jupyter notebooks in `examples/`.
 - [ ] Proper benchmark against GTSAM
 
 ## Credits
-The core bindings were written by Nikolaus Mitchell for [ceres_python_bindings](https://github.com/Edwinem/ceres_python_bindings) and later adapted by [Philipp Lindenberger](https://github.com/Phil26AT) for [pixel-perfect-sfm](https://github.com/cvg/pixel-perfect-sfm).
+Pyceres was inspired by the work of Nikolaus Mitchell for [ceres_python_bindings](https://github.com/Edwinem/ceres_python_bindings) and is maintained by [Philipp Lindenberger](https://github.com/Phil26AT) and [Paul-Edouard Sarlin](https://psarlin.com/).
