@@ -2,7 +2,7 @@
 
 #include "_pyceres/core/wrappers.h"
 #include "_pyceres/helpers.h"
-#include "_pyceres/log_exceptions.h"
+#include "_pyceres/logging.h"
 
 #include <ceres/ceres.h>
 #include <pybind11/pybind11.h>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "_pyceres/helpers.h"
-#include "_pyceres/log_exceptions.h"
+#include "_pyceres/logging.h"
 
 #include <ceres/ceres.h>
 #include <ceres/normal_prior.h>

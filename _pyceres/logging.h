@@ -7,11 +7,9 @@
 #include <glog/logging.h>
 #include <pybind11/iostream.h>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
 namespace py = pybind11;
 
-class glog_dummy {};  // dummy class
 // Issue #7: Glog version > 0.5.0 requires T=size_t, <= 0.5.0 T=int
 template <typename T>
 void PyBindLogStack(const char* data, T size) {
@@ -46,47 +44,163 @@ __attribute__((noreturn)) void PyBindLogTermination() {
   exit(1);
 }
 
-void BindLogging(py::module& m) {
-  // google::InstallFailureSignalHandler();
-  // google::InitGoogleLogging("");
-  // google::InstallFailureFunction(&PyBindLogTermination); //Important to warn
-  // User in jupyter-notebook about FATAL failure (segfault, LOG(FATAL),
-  // CHECK(), ...)
+// Alternative checks to throw an exception instead of aborting the program.
+// Usage: THROW_CHECK(condition) << message;
+//        THROW_CHECK_EQ(val1, val2) << message;
+//        LOG(FATAL_THROW) << message;
+// These macros are copied from glog/logging.h and extended to a new severity
+// level FATAL_THROW.
+#define COMPACT_GOOGLE_LOG_FATAL_THROW \
+  LogMessageFatalThrowDefault(__FILE__, __LINE__)
 
-  py::class_<glog_dummy>(m, "glog")
-      .def_property_static(
-          "minloglevel",
-          [](py::object) { return FLAGS_minloglevel; },
-          [](py::object, int a) { FLAGS_minloglevel = a; })
-      .def_property_static(
-          "stderrthreshold",
-          [](py::object) { return FLAGS_stderrthreshold; },
-          [](py::object, int a) { FLAGS_stderrthreshold = a; })
-      .def_property_static(
-          "log_dir",
-          [](py::object) { return FLAGS_log_dir; },
-          [](py::object, std::string a) { FLAGS_log_dir = a; })
-      .def_property_static(
-          "logtostderr",
-          [](py::object) { return FLAGS_logtostderr; },
-          [](py::object, bool a) { FLAGS_logtostderr = a; })
-      .def_property_static(
-          "alsologtostderr",
-          [](py::object) { return FLAGS_alsologtostderr; },
-          [](py::object, bool a) { FLAGS_alsologtostderr = a; })
-      .def("init",
-           [](std::string path) {
-             google::ShutdownGoogleLogging();
-             google::InitGoogleLogging(path.c_str());
-           })
-      .def("init",
-           []() {
-             google::InstallFailureSignalHandler();
-             google::InitGoogleLogging("");
-             google::InstallFailureFunction(&PyBindLogTermination);
-           })
+#define LOG_TO_STRING_FATAL_THROW(message) \
+  LogMessageFatalThrowDefault(__FILE__, __LINE__, message)
+
+#define LOG_FATAL_THROW(exception) \
+  LogMessageFatalThrow<exception>(__FILE__, __LINE__).stream()
+
+#define THROW_CHECK(condition)                                       \
+  LOG_IF(FATAL_THROW, GOOGLE_PREDICT_BRANCH_NOT_TAKEN(!(condition))) \
+      << "Check failed: " #condition " "
+
+#define THROW_CHECK_OP(name, op, val1, val2) \
+  CHECK_OP_LOG(name, op, val1, val2, LogMessageFatalThrowDefault)
+
+#define THROW_CHECK_EQ(val1, val2) THROW_CHECK_OP(_EQ, ==, val1, val2)
+#define THROW_CHECK_NE(val1, val2) THROW_CHECK_OP(_NE, !=, val1, val2)
+#define THROW_CHECK_LE(val1, val2) THROW_CHECK_OP(_LE, <=, val1, val2)
+#define THROW_CHECK_LT(val1, val2) THROW_CHECK_OP(_LT, <, val1, val2)
+#define THROW_CHECK_GE(val1, val2) THROW_CHECK_OP(_GE, >=, val1, val2)
+#define THROW_CHECK_GT(val1, val2) THROW_CHECK_OP(_GT, >, val1, val2)
+
+#define THROW_CHECK_NOTNULL(val) \
+  ThrowCheckNotNull(__FILE__, __LINE__, "'" #val "' Must be non NULL", (val))
+
+const char* __GetConstFileBaseName(const char* file) {
+  const char* base = strrchr(file, '/');
+  if (!base) {
+    base = strrchr(file, '\\');
+  }
+  return base ? (base + 1) : file;
+}
+
+inline std::string __MakeExceptionPrefix(const char* file, int line) {
+  return "[" + std::string(__GetConstFileBaseName(file)) + ":" +
+         std::to_string(line) + "] ";
+}
+
+template <typename T>
+class LogMessageFatalThrow : public google::LogMessage {
+ public:
+  LogMessageFatalThrow(const char* file, int line)
+      : google::LogMessage(file, line, google::GLOG_ERROR, &message_),
+        prefix_(__MakeExceptionPrefix(file, line)){};
+  LogMessageFatalThrow(const char* file, int line, std::string* message)
+      : google::LogMessage(file, line, google::GLOG_ERROR, message),
+        message_(*message),
+        prefix_(__MakeExceptionPrefix(file, line)){};
+  LogMessageFatalThrow(const char* file,
+                       int line,
+                       const google::CheckOpString& result)
+      : google::LogMessage(file, line, google::GLOG_ERROR, &message_),
+        prefix_(__MakeExceptionPrefix(file, line)) {
+    stream() << "Check failed: " << (*result.str_) << " ";
+    // On LOG(FATAL) glog does not bother cleaning up CheckOpString
+    // so we do it here.
+    delete result.str_;
+  };
+  [[noreturn]] ~LogMessageFatalThrow() noexcept(false) {
+    Flush();
+    throw T(prefix_ + message_);
+  };
+
+ private:
+  std::string message_;
+  std::string prefix_;
+};
+
+using LogMessageFatalThrowDefault = LogMessageFatalThrow<std::invalid_argument>;
+
+template <typename T>
+T ThrowCheckNotNull(const char* file, int line, const char* names, T&& t) {
+  if (t == nullptr) {
+    LogMessageFatalThrowDefault(file, line, new std::string(names));
+  }
+  return std::forward<T>(t);
+}
+
+struct Logging {
+  enum class LogSeverity {
+    GLOG_INFO = google::GLOG_INFO,
+    GLOG_WARNING = google::GLOG_WARNING,
+    GLOG_ERROR = google::GLOG_ERROR,
+    GLOG_FATAL = google::GLOG_FATAL,
+  };
+};  // dummy class
+
+std::pair<std::string, int> GetPythonCallFrame() {
+  const auto frame = py::module_::import("sys").attr("_getframe")(0);
+  const std::string file = py::str(frame.attr("f_code").attr("co_filename"));
+  const std::string function = py::str(frame.attr("f_code").attr("co_name"));
+  const int line = py::int_(frame.attr("f_lineno"));
+  return std::make_pair(file + ":" + function, line);
+}
+
+void BindLogging(py::module& m) {
+  py::class_<Logging> PyLogging(m, "logging");
+  PyLogging.def_readwrite_static("minloglevel", &FLAGS_minloglevel)
+      .def_readwrite_static("stderrthreshold", &FLAGS_stderrthreshold)
+      .def_readwrite_static("log_dir", &FLAGS_log_dir)
+      .def_readwrite_static("logtostderr", &FLAGS_logtostderr)
+      .def_readwrite_static("alsologtostderr", &FLAGS_alsologtostderr)
+      .def_static(
+          "set_log_destination",
+          [](const Logging::LogSeverity severity, const std::string& path) {
+            google::SetLogDestination(
+                static_cast<google::LogSeverity>(severity), path.c_str());
+          })
+      .def_static(
+          "info",
+          [](const std::string& msg) {
+            auto frame = GetPythonCallFrame();
+            google::LogMessage(frame.first.c_str(), frame.second).stream()
+                << msg;
+          })
+      .def_static("warning",
+                  [](const std::string& msg) {
+                    auto frame = GetPythonCallFrame();
+                    google::LogMessage(
+                        frame.first.c_str(), frame.second, google::GLOG_WARNING)
+                            .stream()
+                        << msg;
+                  })
+      .def_static("error",
+                  [](const std::string& msg) {
+                    auto frame = GetPythonCallFrame();
+                    google::LogMessage(
+                        frame.first.c_str(), frame.second, google::GLOG_ERROR)
+                            .stream()
+                        << msg;
+                  })
+      .def_static(
+          "fatal",
+          [](const std::string& msg) {
+            auto frame = GetPythonCallFrame();
+            google::LogMessageFatal(frame.first.c_str(), frame.second).stream()
+                << msg;
+          })
       .def("install_failure_writer",
            []() { google::InstallFailureWriter(&PyBindLogStack); })
       .def("install_failure_function",
            []() { google::InstallFailureFunction(&PyBindLogTermination); });
+  py::enum_<Logging::LogSeverity>(PyLogging, "Level")
+      .value("INFO", Logging::LogSeverity::GLOG_INFO)
+      .value("WARNING", Logging::LogSeverity::GLOG_WARNING)
+      .value("ERROR", Logging::LogSeverity::GLOG_ERROR)
+      .value("FATAL", Logging::LogSeverity::GLOG_FATAL)
+      .export_values();
+  google::InitGoogleLogging("");
+  google::InstallFailureSignalHandler();
+  google::InstallFailureFunction(&PyBindLogTermination);
+  FLAGS_alsologtostderr = true;
 }
