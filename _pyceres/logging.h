@@ -29,7 +29,10 @@ void PyBindLogStack(const char* data, T size) {
   std::cerr << std::endl << std::endl << std::endl;
 }
 
-__attribute__((noreturn)) void PyBindLogTermination() {
+#ifdef __GNUC__
+__attribute__((noreturn))
+#endif
+void PyBindLogTermination() {
   std::chrono::milliseconds timespan(2000);  // or whatever
   py::scoped_estream_redirect stream(
       std::cerr,                                // std::ostream&
