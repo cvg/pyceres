@@ -10,6 +10,9 @@ if(NOT TARGET Ceres::ceres)
     target_link_libraries(
         Ceres::ceres INTERFACE ${CERES_LIBRARIES})
 endif()
+if(${CERES_VERSION} VERSION_LESS "2.1.0")
+    message( SEND_ERROR "Ceres version >= 2.1 required, found ${CERES_VERSION}." )
+endif()
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 
