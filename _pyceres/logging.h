@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <exception>
 #include <iostream>
 #include <thread>
 
@@ -109,9 +110,17 @@ class LogMessageFatalThrow : public google::LogMessage {
     // so we do it here.
     delete result.str_;
   };
-  [[noreturn]] ~LogMessageFatalThrow() noexcept(false) {
+  ~LogMessageFatalThrow() noexcept(false) {
     Flush();
-    throw T(prefix_ + message_);
+#if defined(__cpp_lib_uncaught_exceptions) && \
+    (__cpp_lib_uncaught_exceptions >= 201411L)
+    if (std::uncaught_exceptions() == 0)
+#else
+    if (!std::uncaught_exception())
+#endif
+    {
+      throw T(prefix_ + message_);
+    }
   };
 
  private:
@@ -124,7 +133,7 @@ using LogMessageFatalThrowDefault = LogMessageFatalThrow<std::invalid_argument>;
 template <typename T>
 T ThrowCheckNotNull(const char* file, int line, const char* names, T&& t) {
   if (t == nullptr) {
-    LogMessageFatalThrowDefault(file, line, new std::string(names));
+    LogMessageFatalThrowDefault(file, line).stream() << names;
   }
   return std::forward<T>(t);
 }
