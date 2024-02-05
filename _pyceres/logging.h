@@ -193,7 +193,7 @@ void BindLogging(py::module& m) {
            []() { google::InstallFailureWriter(&PyBindLogStack); })
       .def("install_failure_function",
            []() { google::InstallFailureFunction(&PyBindLogTermination); });
-  py::enum_<Logging::LogSeverity>(PyLogging, "Level")
+  py::enum_<Logging::LogSeverity>(PyLogging, "Level", py::module_local())
       .value("INFO", Logging::LogSeverity::GLOG_INFO)
       .value("WARNING", Logging::LogSeverity::GLOG_WARNING)
       .value("ERROR", Logging::LogSeverity::GLOG_ERROR)
