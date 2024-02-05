@@ -147,7 +147,7 @@ std::pair<std::string, int> GetPythonCallFrame() {
 }
 
 void BindLogging(py::module& m) {
-  py::class_<Logging> PyLogging(m, "logging");
+  py::class_<Logging> PyLogging(m, "logging", py::module_local());
   PyLogging.def_readwrite_static("minloglevel", &FLAGS_minloglevel)
       .def_readwrite_static("stderrthreshold", &FLAGS_stderrthreshold)
       .def_readwrite_static("log_dir", &FLAGS_log_dir)
