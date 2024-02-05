@@ -42,7 +42,7 @@ class PyIterationCallback : public ceres::IterationCallback {
 
 PYBIND11_MAKE_OPAQUE(std::vector<ceres::IterationCallback*>);
 
-void init_callbacks(py::module& m) {
+void BindCallbacks(py::module& m) {
   py::class_<ceres::IterationCallback,
              PyIterationCallback /* <--- trampoline*/>(m, "IterationCallback")
       .def(py::init<>())

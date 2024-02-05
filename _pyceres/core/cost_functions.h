@@ -1,7 +1,7 @@
 #pragma once
 
 #include "_pyceres/helpers.h"
-#include "_pyceres/log_exceptions.h"
+#include "_pyceres/logging.h"
 
 #include <ceres/ceres.h>
 #include <pybind11/pybind11.h>
@@ -12,7 +12,7 @@ namespace py = pybind11;
 // This allows use to create python based cost functions.
 class PyCostFunction : public ceres::CostFunction {
  public:
-  /* Inherit the constructors */
+  // Inherit the constructors.
   using ceres::CostFunction::CostFunction;
   using ceres::CostFunction::set_num_residuals;
 
@@ -82,16 +82,15 @@ class PyCostFunction : public ceres::CostFunction {
   // Mutable so they can be modified by the const function.
   mutable std::vector<py::array_t<double>> parameters_vec;
   mutable std::vector<py::array_t<double>> jacobians_vec;
-  mutable bool cached_flag = false;  // Flag used to determine if the vectors
-  // need to be resized
-  mutable py::array_t<double>
-      residuals_wrap;  // Buffer to contain the residuals
-  // pointer
-  mutable py::str no_copy;  // Dummy variable for pybind11 to avoid copy
-                            // copy
+  // Flag used to determine if the vectors need to be resized.
+  mutable bool cached_flag = false;
+  // Buffer to contain the residuals pointer.
+  mutable py::array_t<double> residuals_wrap;
+  // Dummy variable for pybind11 to avoid a copy.
+  mutable py::str no_copy;
 };
 
-void init_cost_functions(py::module& m) {
+void BindCostFunctions(py::module& m) {
   py::class_<ceres::CostFunction, PyCostFunction /* <--- trampoline*/>(
       m, "CostFunction")
       .def(py::init<>())

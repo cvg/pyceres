@@ -2,7 +2,7 @@
 
 #include "_pyceres/core/wrappers.h"
 #include "_pyceres/helpers.h"
-#include "_pyceres/log_exceptions.h"
+#include "_pyceres/logging.h"
 
 #include <ceres/ceres.h>
 #include <pybind11/pybind11.h>
@@ -26,7 +26,7 @@ std::unique_ptr<ceres::Problem> CreatePythonProblem() {
   return std::unique_ptr<ceres::Problem>(new ceres::Problem(options));
 }
 
-void init_problem(py::module& m) {
+void BindProblem(py::module& m) {
   using options = ceres::Problem::Options;
   py::class_<ceres::Problem::Options>(m, "ProblemOptions")
       .def(py::init(&CreateProblemOptions))  // Ensures default is that

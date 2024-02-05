@@ -1,7 +1,7 @@
 #pragma once
 
 #include "_pyceres/helpers.h"
-#include "_pyceres/log_exceptions.h"
+#include "_pyceres/logging.h"
 
 #include <string>
 
@@ -29,7 +29,7 @@ class PyLossFunction : public ceres::LossFunction {
     if (overload) {
       overload.operator()(sq_norm, out_arr);
     } else {
-      THROW_EXCEPTION(std::runtime_error, "<Evaluate> not implemented.")
+      LOG_FATAL_THROW(std::runtime_error) << "<Evaluate> not implemented.";
     }
   }
 
@@ -87,7 +87,7 @@ std::shared_ptr<ceres::LossFunction> CreateLossFunctionFromDict(py::dict dict) {
   }
 }
 
-void init_loss_functions(py::module& m) {
+void BindLossFunctions(py::module& m) {
   py::class_<LossFunction,
              PyLossFunction /*<--- trampoline*/,
              std::shared_ptr<LossFunction>>(m, "LossFunction")
