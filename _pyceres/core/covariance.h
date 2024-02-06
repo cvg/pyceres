@@ -1,34 +1,32 @@
 #pragma once
 
 #include "_pyceres/helpers.h"
-#include "_pyceres/log_exceptions.h"
+#include "_pyceres/logging.h"
 
 #include <ceres/ceres.h>
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
 
-void init_covariance(py::module& m) {
-  using c_options = ceres::Covariance::Options;
-  auto co = py::class_<ceres::Covariance::Options>(m, "CovarianceOptions")
-                .def(py::init<>())
-                .def_property(
-                    "num_threads",
-                    [](const c_options& self) { return self.num_threads; },
-                    [](c_options& self, int n_threads) {
-                      int effective_n_threads =
-                          GetEffectiveNumThreads(n_threads);
-                      self.num_threads = effective_n_threads;
-                    })
-                .def_readwrite("sparse_linear_algebra_library_type",
-                               &c_options::sparse_linear_algebra_library_type)
-                .def_readwrite("algorithm_type", &c_options::algorithm_type)
-                .def_readwrite("min_reciprocal_condition_number",
-                               &c_options::min_reciprocal_condition_number)
-                .def_readwrite("null_space_rank", &c_options::null_space_rank)
-                .def_readwrite("apply_loss_function",
-                               &c_options::apply_loss_function);
-  make_dataclass(co);
+void BindCovariance(py::module& m) {
+  using Options = ceres::Covariance::Options;
+  py::class_<Options> PyOptions(m, "CovarianceOptions");
+  PyOptions.def(py::init<>())
+      .def_property(
+          "num_threads",
+          [](const Options& self) { return self.num_threads; },
+          [](Options& self, int n_threads) {
+            int effective_n_threads = GetEffectiveNumThreads(n_threads);
+            self.num_threads = effective_n_threads;
+          })
+      .def_readwrite("sparse_linear_algebra_library_type",
+                     &Options::sparse_linear_algebra_library_type)
+      .def_readwrite("algorithm_type", &Options::algorithm_type)
+      .def_readwrite("min_reciprocal_condition_number",
+                     &Options::min_reciprocal_condition_number)
+      .def_readwrite("null_space_rank", &Options::null_space_rank)
+      .def_readwrite("apply_loss_function", &Options::apply_loss_function);
+  MakeDataclass(PyOptions);
 
   py::class_<ceres::Covariance>(m, "Covariance")
       .def(py::init<ceres::Covariance::Options>())

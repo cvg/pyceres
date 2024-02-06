@@ -1,0 +1,3 @@
+ceres[lapack,suitesparse]
+gflags
+glog

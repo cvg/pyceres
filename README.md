@@ -4,8 +4,13 @@ This repository provides minimal Python bindings for the [Ceres Solver](http://c
 
 ## Installation
 
-1. Install [COLMAP 3.9.1](https://colmap.github.io/)
+Wheels for Python 8/9/10 on Linux, macOS 10+ (both Intel and Apple Silicon), and Windows can be installed using pip:
+```bash
+pip install pyceres
+```
 
+To build from source, follow the following steps:
+1. Install the Ceres Solver following [the official instructions](http://ceres-solver.org/installation.html).
 2. Clone the repository and build the package:
 
 ```sh
@@ -14,36 +19,22 @@ cd pyceres
 python -m pip install .
 ```
 
-### Docker image
-
 Alternatively, you can build the Docker image:
 
 ```sh
-export COLMAP_VERSION=3.9.1
-export CUDA_ARCHITECTURES=70
-docker build -t pyceres \
-    --build-arg COLMAP_VERSION=${COLMAP_VERSION}  \
-    --build-arg CUDA_ARCHITECTURES=${CUDA_ARCHITECTURES}  \
-    -f Dockerfile .
+docker build -t pyceres -f Dockerfile .
 ```
 
 ## Factor graph optimization
 
-For now we support the following cost functions, defined in `_pyceres/factors/`:
-- camera reprojection error (with fixed or variable pose)
-- rig reprojection error (with fixed or variable rig extrinsics)
-- relative pose prior
-- absolute pose prior
+Factors may be defined in Python (see [`examples/test_python_cost.py`](./examples/test_python_cost.py)) or in C++ with associated Python bindings.
+[PyCOLMAP](https://github.com/colmap/colmap/tree/main/pycolmap) provides the following cost functions in `pycolmap.cost_functions`:
+- reprojection error for different camera models, with fixed or variable pose and 3D points
+- reprojection error for multi-camera rigs, with fixed or variable rig extrinsics
+- error of absolute and relative poses
+- Sampson error for epipolar geometry
 
-All factors support basic observation covariances. Reprojection error costs rely on camera models defined in COLMAP. Absolute poses are represented as quaternions and are expressed in the sensor frame, so are pose residuals, which use the right-hand convention as in the [GTSAM library](https://github.com/borglab/gtsam).
-
-## Examples
-See the Jupyter notebooks in `examples/`.
-
-## TODO
-- [ ] Define a clean interface for covariances, like in GTSAM
-- [ ] Add bindings for Ceres covariance estimation
-- [ ] Proper benchmark against GTSAM
+See [`examples/`](./examples/) to use these factors.
 
 ## Credits
-The core bindings were written by Nikolaus Mitchell for [ceres_python_bindings](https://github.com/Edwinem/ceres_python_bindings) and later adapted by [Philipp Lindenberger](https://github.com/Phil26AT) for [pixel-perfect-sfm](https://github.com/cvg/pixel-perfect-sfm).
+Pyceres was inspired by the work of Nikolaus Mitchell for [ceres_python_bindings](https://github.com/Edwinem/ceres_python_bindings) and is maintained by [Philipp Lindenberger](https://github.com/Phil26AT) and [Paul-Edouard Sarlin](https://psarlin.com/).
