@@ -12,5 +12,6 @@ git checkout ${VCPKG_COMMIT_ID}
 ./bootstrap-vcpkg.sh
 ./vcpkg install --recurse --clean-after-build \
     --triplet=${VCPKG_TARGET_TRIPLET} \
+    --debug \
     ${DEPENDENCIES}
 ./vcpkg integrate install
