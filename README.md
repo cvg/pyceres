@@ -4,7 +4,14 @@ This repository provides minimal Python bindings for the [Ceres Solver](http://c
 
 ## Installation
 
-Clone the repository and build the package:
+Wheels for Python 8/9/10 on Linux, macOS 10+ (both Intel and Apple Silicon), and Windows can be installed using pip:
+```bash
+pip install pyceres
+```
+
+To build from source, follow the following steps:
+1. Install the Ceres Solver following [the official instructions](http://ceres-solver.org/installation.html).
+2. Clone the repository and build the package:
 
 ```sh
 git clone https://github.com/cvg/pyceres.git
