@@ -5,7 +5,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pyceres"
-version = "1.1"
+version = "2.0"
 description="Factor graph optimization with Ceres, in Python"
 readme = "README.md"
 authors = [
