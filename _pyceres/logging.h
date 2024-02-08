@@ -211,8 +211,10 @@ void BindLogging(py::module& m) {
       .value("ERROR", Logging::LogSeverity::GLOG_ERROR)
       .value("FATAL", Logging::LogSeverity::GLOG_FATAL)
       .export_values();
-  google::InitGoogleLogging("");
-  google::InstallFailureSignalHandler();
-  google::InstallFailureFunction(&PyBindLogTermination);
+  if (!google::IsGoogleLoggingInitialized()) {
+    google::InitGoogleLogging("");
+    google::InstallFailureSignalHandler();
+    google::InstallFailureFunction(&PyBindLogTermination);
+  }
   FLAGS_alsologtostderr = true;
 }
