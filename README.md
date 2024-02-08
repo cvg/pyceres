@@ -5,7 +5,7 @@ This repository provides minimal Python bindings for the [Ceres Solver](http://c
 ## Installation
 
 Wheels for Python 8/9/10 on Linux, macOS 10+ (both Intel and Apple Silicon), and Windows can be installed using pip:
-```bash
+```sh
 pip install pyceres
 ```
 
@@ -22,8 +22,13 @@ python -m pip install .
 Alternatively, you can build the Docker image:
 
 ```sh
-docker build -t pyceres -f Dockerfile .
+docker build --target builder -t pyceres:builder .
+docker build --target runtime -t pyceres:runtime .
 ```
+Note: The builder image can be used for development and testing, as it contains
+all the necessary dependencies for building the project. On the other hand, the
+runtime version is streamlined for running pyceres, containing only the minimal
+dependencies required for execution, making it lightweight.
 
 ## Factor graph optimization
 
