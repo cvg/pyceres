@@ -1,18 +1,14 @@
 cmake_minimum_required(VERSION 3.10)
 project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION})
 
-find_package(Ceres REQUIRED)
-if(NOT TARGET Ceres::ceres)
-    # Older Ceres versions don't come with an imported interface target.
-    add_library(Ceres::ceres INTERFACE IMPORTED)
-    target_include_directories(
-        Ceres::ceres INTERFACE ${CERES_INCLUDE_DIRS})
-    target_link_libraries(
-        Ceres::ceres INTERFACE ${CERES_LIBRARIES})
+find_package(glog REQUIRED)
+if(DEFINED glog_VERSION_MAJOR)
+  # Older versions of glog don't export version variables.
+  add_definitions("-DGLOG_VERSION_MAJOR=${glog_VERSION_MAJOR}")
+  add_definitions("-DGLOG_VERSION_MINOR=${glog_VERSION_MINOR}")
 endif()
-if(${CERES_VERSION} VERSION_LESS "2.1.0")
-    message( SEND_ERROR "Ceres version >= 2.1 required, found ${CERES_VERSION}." )
-endif()
+
+find_package(Ceres 2.1 REQUIRED)
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 

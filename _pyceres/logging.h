@@ -105,7 +105,12 @@ class LogMessageFatalThrow : public google::LogMessage {
         prefix_(__MakeExceptionPrefix(file, line)){};
   LogMessageFatalThrow(const char* file,
                        int line,
+#if defined(GLOG_VERSION_MAJOR) && \
+    (GLOG_VERSION_MAJOR > 0 || GLOG_VERSION_MINOR >= 7)
+                       const google::logging::internal::CheckOpString& result)
+#else
                        const google::CheckOpString& result)
+#endif
       : google::LogMessage(file, line, google::GLOG_ERROR, &message_),
         prefix_(__MakeExceptionPrefix(file, line)) {
     stream() << "Check failed: " << (*result.str_) << " ";
@@ -211,7 +216,11 @@ void BindLogging(py::module& m) {
       .value("ERROR", Logging::LogSeverity::GLOG_ERROR)
       .value("FATAL", Logging::LogSeverity::GLOG_FATAL)
       .export_values();
-  if (!google::IsGoogleLoggingInitialized()) {
+#if defined(GLOG_VERSION_MAJOR) && \
+    (GLOG_VERSION_MAJOR > 0 || GLOG_VERSION_MINOR >= 6)
+  if (!google::IsGoogleLoggingInitialized())
+#endif
+  {
     google::InitGoogleLogging("");
     google::InstallFailureSignalHandler();
     google::InstallFailureFunction(&PyBindLogTermination);
