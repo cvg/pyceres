@@ -17,8 +17,7 @@ inline Eigen::MatrixXd SqrtInformation(const Eigen::MatrixXd& covariance) {
 class NormalError {
  public:
   explicit NormalError(const Eigen::MatrixXd& covariance)
-      : sqrt_information_(SqrtInformation(covariance)),
-        dimension_(covariance.rows()) {
+      : sqrt_information_(SqrtInformation(covariance)) {
     THROW_CHECK_EQ(covariance.rows(), covariance.cols());
   }
 
@@ -34,18 +33,18 @@ class NormalError {
 
   template <typename T>
   bool operator()(T const* const* parameters, T* residuals_ptr) const {
-    for (int i = 0; i < dimension_; ++i) {
+    const int dimension = sqrt_information_.rows();
+    for (int i = 0; i < dimension; ++i) {
       residuals_ptr[i] = parameters[0][i] - parameters[1][i];
     }
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>> residuals(residuals_ptr,
-                                                              dimension_);
+                                                              dimension);
     residuals.applyOnTheLeft(sqrt_information_.template cast<T>());
     return true;
   }
 
  private:
   const Eigen::MatrixXd sqrt_information_;
-  const int dimension_;
 };
 
 void BindFactors(py::module& m) {
