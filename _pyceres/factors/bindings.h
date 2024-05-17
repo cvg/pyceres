@@ -13,6 +13,7 @@ inline Eigen::MatrixXd SqrtInformation(const Eigen::MatrixXd& covariance) {
   return covariance.inverse().llt().matrixL();
 }
 
+// Mahalanobis squared distance between two parameters.
 class NormalError {
  public:
   explicit NormalError(const Eigen::MatrixXd& covariance)
