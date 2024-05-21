@@ -1,6 +1,5 @@
 ARG UBUNTU_VERSION=22.04
-ARG NVIDIA_CUDA_VERSION=12.3.1
-FROM nvidia/cuda:${NVIDIA_CUDA_VERSION}-devel-ubuntu${UBUNTU_VERSION} as builder
+FROM ubuntu:${UBUNTU_VERSION} as builder
 
 ENV QT_XCB_GL_INTEGRATION=xcb_egl
 
@@ -32,10 +31,44 @@ RUN apt-get install -y --no-install-recommends --no-install-suggests wget && \
     tar zxf ceres-solver-2.1.0.tar.gz && \
     mkdir ceres-build && \
     cd ceres-build && \
-    cmake ../ceres-solver-2.1.0 -GNinja && \
+    cmake ../ceres-solver-2.1.0 -GNinja \
+        -DCMAKE_INSTALL_PREFIX=/ceres_installed && \
     ninja install
+RUN cp -r /ceres_installed/* /usr/local/
 
 # Build pyceres.
 COPY . /pyceres
 WORKDIR /pyceres
-RUN pip install . -vv
+RUN pip install --upgrade pip
+RUN pip wheel . --no-deps -w dist-wheel -vv && \
+    whl_path=$(find dist-wheel/ -name "*.whl") && \
+    echo $whl_path >dist-wheel/whl_path.txt
+
+
+#
+# Runtime stage.
+#
+FROM ubuntu:${UBUNTU_VERSION} as runtime
+
+# Install minimal runtime dependencies.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends --no-install-suggests \
+        libgoogle-glog0v5 \
+        libspqr2 \
+        libcxsparse3 \
+        libatlas3-base \
+        python-is-python3 \
+        python3-minimal \
+        python3-pip
+
+# Copy installed library in the builder stage.
+COPY --from=builder /ceres_installed/ /usr/local/
+
+# Install pyceres.
+COPY --from=builder /pyceres/dist-wheel /tmp/dist-wheel
+RUN pip install --upgrade pip
+RUN cd /tmp && whl_path=$(cat dist-wheel/whl_path.txt) && pip install $whl_path
+RUN rm -rfv /tmp/*
+
+# # Verify if pyceres library is accessible from python.
+RUN python -c "import pyceres"
