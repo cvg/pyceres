@@ -52,7 +52,7 @@ void BindProblem(py::module& m) {
 
   py::class_<ResidualBlockIDWrapper> residual_block_wrapper(m, "ResidualBlock");
 
-  py::class_<ceres::Problem>(m, "Problem")
+  py::class_<ceres::Problem, std::shared_ptr<ceres::Problem>>(m, "Problem")
       .def(py::init(&CreatePythonProblem))
       .def(py::init<ceres::Problem::Options>())
       .def("num_parameter_blocks", &ceres::Problem::NumParameterBlocks)
