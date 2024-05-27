@@ -4,7 +4,7 @@ This repository provides minimal Python bindings for the [Ceres Solver](http://c
 
 ## Installation
 
-Wheels for Python 8/9/10 on Linux, macOS 10+ (both Intel and Apple Silicon), and Windows can be installed using pip:
+Wheels for Python 8/9/10/11/12 on Linux, macOS 10+ (both Intel and Apple Silicon), and Windows can be installed using pip:
 ```bash
 pip install pyceres
 ```
