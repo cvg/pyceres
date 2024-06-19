@@ -10,17 +10,7 @@
 namespace py = pybind11;
 
 inline Eigen::MatrixXd SqrtInformation(const Eigen::MatrixXd& covariance) {
-  // LLT decomposition of Fisher information matrix with SVD
-  Eigen::JacobiSVD<Eigen::MatrixXd> svd(
-      covariance, Eigen::ComputeThinU | Eigen::ComputeThinV);
-  Eigen::MatrixXd U = svd.matrixU();
-  Eigen::VectorXd singularValues = svd.singularValues();
-  const double epsilon = 1e-12;
-  Eigen::VectorXd invSqrtSingularValues =
-      singularValues.array().max(0.).sqrt().max(epsilon).inverse();
-  Eigen::MatrixXd invSqrtSingularValuesDiag =
-      invSqrtSingularValues.asDiagonal();
-  return U * invSqrtSingularValuesDiag;
+  return covariance.inverse().llt().matrixL();
 }
 
 // Mahalanobis squared distance between two parameters.
