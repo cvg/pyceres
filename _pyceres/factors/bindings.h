@@ -10,7 +10,7 @@
 namespace py = pybind11;
 
 inline Eigen::MatrixXd SqrtInformation(const Eigen::MatrixXd& covariance) {
-  return covariance.inverse().llt().matrixL();
+  return covariance.inverse().llt().matrixL().transpose();
 }
 
 // Mahalanobis squared distance between two parameters.
@@ -39,7 +39,7 @@ class NormalError {
     }
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>> residuals(residuals_ptr,
                                                               dimension);
-    residuals.applyOnTheLeft(sqrt_information_.transpose().template cast<T>());
+    residuals.applyOnTheLeft(sqrt_information_.template cast<T>());
     return true;
   }
 
