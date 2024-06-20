@@ -235,10 +235,10 @@ void BindProblem(py::module& m) {
              self.RemoveResidualBlock(residual_block_id.id);
            })
       .def("evaluate_jacobian",
-          [](ceres::Problem& self, const ceres::Problem::EvaluateOptions& options) {
-            ceres::CRSMatrix jacobian;
-            self.Evaluate(options, nullptr, nullptr, nullptr, &jacobian);
-            return jacobian;
-          }
-          );
+           [](ceres::Problem& self,
+              const ceres::Problem::EvaluateOptions& options) {
+             ceres::CRSMatrix jacobian;
+             self.Evaluate(options, nullptr, nullptr, nullptr, &jacobian);
+             return jacobian;
+           });
 }
