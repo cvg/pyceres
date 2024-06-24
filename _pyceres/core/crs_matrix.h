@@ -17,9 +17,9 @@ py::tuple ConvertCRSToPyTuple(const ceres::CRSMatrix& crsMatrix) {
   py::array_t<int> rows(n_values), cols(n_values);
   py::array_t<double> values(n_values);
 
-  int* rows_data = static_cast<int*>(rows.request().ptr);
-  int* cols_data = static_cast<int*>(cols.request().ptr);
-  double* values_data = static_cast<double*>(values.request().ptr);
+  int* const rows_data = static_cast<int*>(rows.request().ptr);
+  int* const cols_data = static_cast<int*>(cols.request().ptr);
+  double* const values_data = static_cast<double*>(values.request().ptr);
 
   int counter = 0;
   for (int row = 0; row < crsMatrix.num_rows; ++row) {
