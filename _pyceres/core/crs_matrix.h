@@ -13,14 +13,21 @@ namespace py = pybind11;
 
 namespace {
 py::tuple ConvertCRSToPyTuple(const ceres::CRSMatrix& crsMatrix) {
-  std::vector<int> rows, cols;
-  std::vector<double> values;
+  size_t n_values = crsMatrix.values.size();
+  py::array_t<int> rows(n_values), cols(n_values);
+  py::array_t<double> values(n_values);
 
+  int* rows_data = static_cast<int*>(rows.request().ptr);
+  int* cols_data = static_cast<int*>(cols.request().ptr);
+  double* values_data = static_cast<double*>(values.request().ptr);
+
+  int counter = 0;
   for (int row = 0; row < crsMatrix.num_rows; ++row) {
     for (int k = crsMatrix.rows[row]; k < crsMatrix.rows[row + 1]; ++k) {
-      rows.push_back(row);
-      cols.push_back(crsMatrix.cols[k]);
-      values.push_back(crsMatrix.values[k]);
+      rows_data[counter] = row;
+      cols_data[counter] = crsMatrix.cols[k];
+      values_data[counter] = crsMatrix.values[k];
+      counter++;
     }
   }
 
@@ -38,6 +45,5 @@ void BindCRSMatrix(py::module& m) {
       .def_readonly("rows", &CRSMatrix::rows)
       .def_readonly("cols", &CRSMatrix::cols)
       .def_readonly("values", &CRSMatrix::values)
-      .def("to_tuple",
-           [](CRSMatrix& self) { return ConvertCRSToPyTuple(self); });
+      .def("to_tuple", &ConvertCRSToPyTuple);
 }
