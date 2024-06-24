@@ -13,7 +13,7 @@ namespace py = pybind11;
 
 namespace {
 py::tuple ConvertCRSToPyTuple(const ceres::CRSMatrix& crsMatrix) {
-  size_t n_values = crsMatrix.values.size();
+  const size_t n_values = crsMatrix.values.size();
   py::array_t<int> rows(n_values), cols(n_values);
   py::array_t<double> values(n_values);
 
