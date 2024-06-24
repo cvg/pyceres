@@ -10,7 +10,7 @@
 namespace py = pybind11;
 
 inline Eigen::MatrixXd SqrtInformation(const Eigen::MatrixXd& covariance) {
-  return covariance.inverse().llt().matrixL();
+  return covariance.inverse().llt().matrixL().transpose();
 }
 
 // Mahalanobis squared distance between two parameters.
