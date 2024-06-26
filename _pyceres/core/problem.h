@@ -40,11 +40,17 @@ void BindProblem(py::module& m) {
       .def_readwrite("disable_all_safety_checks",
                      &options::disable_all_safety_checks);
 
-  // TODO: bind Problem::Evaluate
   py::class_<ceres::Problem::EvaluateOptions>(m, "EvaluateOptions")
       .def(py::init<>())
-      // Doesn't make sense to wrap this as you can't see the pointers in python
-      //.def_readwrite("parameter_blocks",&ceres::Problem::EvaluateOptions)
+      .def("set_parameter_blocks",
+           [](ceres::Problem::EvaluateOptions& self,
+              std::vector<py::array_t<double>>& blocks) {
+             self.parameter_blocks.clear();
+             for (auto it = blocks.begin(); it != blocks.end(); ++it) {
+               py::buffer_info info = it->request();
+               self.parameter_blocks.push_back(static_cast<double*>(info.ptr));
+             }
+           })
       .def_readwrite("apply_loss_function",
                      &ceres::Problem::EvaluateOptions::apply_loss_function)
       .def_readwrite("num_threads",
@@ -233,5 +239,23 @@ void BindProblem(py::module& m) {
       .def("remove_residual_block",
            [](ceres::Problem& self, ResidualBlockIDWrapper& residual_block_id) {
              self.RemoveResidualBlock(residual_block_id.id);
-           });
+           })
+      .def(
+          "evaluate_residuals",
+          [](ceres::Problem& self,
+             const ceres::Problem::EvaluateOptions& options) {
+            std::vector<double> residuals;
+            self.Evaluate(options, nullptr, &residuals, nullptr, nullptr);
+            return residuals;
+          },
+          py::arg("options") = ceres::Problem::EvaluateOptions())
+      .def(
+          "evaluate_jacobian",
+          [](ceres::Problem& self,
+             const ceres::Problem::EvaluateOptions& options) {
+            ceres::CRSMatrix jacobian;
+            self.Evaluate(options, nullptr, nullptr, nullptr, &jacobian);
+            return jacobian;
+          },
+          py::arg("options") = ceres::Problem::EvaluateOptions());
 }
