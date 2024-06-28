@@ -11,6 +11,7 @@ namespace py = pybind11;
 
 namespace {
 
+// Set residual blocks for Ceres::Problem::EvaluateOptions
 void SetResidualBlocks(
     ceres::Problem::EvaluateOptions& self,
     std::vector<ResidualBlockIDWrapper>& residual_block_ids) {
