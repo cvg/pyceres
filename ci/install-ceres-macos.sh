@@ -3,10 +3,10 @@ set -x -e
 CURRDIR=$(pwd)
 
 brew update
-brew install git cmake ninja llvm
+brew install git cmake ninja llvm gfortran
 
 # When building lapack-reference, vcpkg/cmake looks for gfortran.
-ln -s $(which gfortran-13) "$(dirname $(which gfortran-13))/gfortran"
+ln -sf $(which gfortran-14) "$(dirname $(which gfortran-14))/gfortran"
 
 DEPENDENCIES=$(cat ${CURRDIR}/ci/vcpkg-dependencies.txt)
 git clone https://github.com/microsoft/vcpkg ${VCPKG_INSTALLATION_ROOT}

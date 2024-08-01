@@ -2,7 +2,6 @@
 requires = ["scikit-build-core>=0.3.3", "pybind11==2.11.1"]
 build-backend = "scikit_build_core.build"
 
-
 [project]
 name = "pyceres"
 version = "2.2"
@@ -27,7 +26,7 @@ archs = ["auto64"]
 test-command = "python -c \"import pyceres; print(pyceres.__version__)\""
 
 [tool.cibuildwheel.environment]
-VCPKG_COMMIT_ID = "fa6e6a6ec3224f1d3697d544edef6272a59cd834"
+VCPKG_COMMIT_ID = "e01906b2ba7e645a76ee021a19de616edc98d29f"
 
 [tool.cibuildwheel.linux]
 before-all = "{package}/ci/install-ceres-centos.sh"

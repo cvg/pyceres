@@ -3,7 +3,21 @@ set -e -x
 uname -a
 CURRDIR=$(pwd)
 
-yum install -y gcc gcc-c++ ninja-build curl zip unzip tar
+export PATH="/usr/bin"
+
+# Install toolchain under AlmaLinux 8,
+# see https://almalinux.pkgs.org/8/almalinux-appstream-x86_64/
+yum install -y \
+    gcc \
+    gcc-c++ \
+    gcc-gfortran \
+    git \
+    cmake3 \
+    ninja-build \
+    curl \
+    zip \
+    unzip \
+    tar
 
 DEPENDENCIES=$(cat ${CURRDIR}/ci/vcpkg-dependencies.txt)
 git clone https://github.com/microsoft/vcpkg ${VCPKG_INSTALLATION_ROOT}
