@@ -219,9 +219,13 @@ void BindLogging(py::module& m) {
       .value("ERROR", Logging::LogSeverity::GLOG_ERROR)
       .value("FATAL", Logging::LogSeverity::GLOG_FATAL)
       .export_values();
+
 #if defined(GLOG_VERSION_MAJOR) && \
     (GLOG_VERSION_MAJOR > 0 || GLOG_VERSION_MINOR >= 6)
   if (!google::IsGoogleLoggingInitialized())
+#else
+  // Check whether pycolmap has already been imported.
+  if (!py::module_::import("sys").attr("modules").contains("pycolmap"))
 #endif
   {
     google::InitGoogleLogging("");
