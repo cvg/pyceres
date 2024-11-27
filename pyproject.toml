@@ -29,7 +29,7 @@ test-command = "python -c \"import pyceres; print(pyceres.__version__)\""
 VCPKG_COMMIT_ID = "e01906b2ba7e645a76ee021a19de616edc98d29f"
 
 [tool.cibuildwheel.linux]
-before-all = "{package}/ci/install-ceres-centos.sh"
+before-all = "{package}/ci/install-ceres-almalinux.sh"
 
 [tool.cibuildwheel.macos]
 before-all = "{package}/ci/install-ceres-macos.sh"
