@@ -12,7 +12,7 @@ find_package(Ceres 2.1 REQUIRED)
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 
-find_package(pybind11 2.11.1 REQUIRED)
+find_package(pybind11 2.13.6 REQUIRED)
 
 pybind11_add_module(pyceres _pyceres/bindings.cc)
 target_include_directories(pyceres PRIVATE ${PROJECT_SOURCE_DIR})
