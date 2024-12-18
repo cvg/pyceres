@@ -236,7 +236,7 @@ void BindSolver(py::module& m) {
   py::class_<IterSummary, std::shared_ptr<IterSummary>> PyIterSummary(
       m, "IterationSummary");
   PyIterSummary.def(py::init<>())
-      .def(py::init<IterSummary>())
+      .def(py::init<const IterSummary&>())
       .def_readonly("iteration", &IterSummary::iteration)
       .def_readonly("step_is_valid", &IterSummary::step_is_valid)
       .def_readonly("step_is_nonmonotonic", &IterSummary::step_is_nonmonotonic)
