@@ -16,8 +16,9 @@ void BindSolver(py::module& m) {
         py::call_guard<py::gil_scoped_release>());
 
   using Options = ceres::Solver::Options;
-  py::class_<Options> PyOptions(m, "SolverOptions");
+  py::class_<Options, std::shared_ptr<Options>> PyOptions(m, "SolverOptions");
   PyOptions.def(py::init<>())
+      .def(py::init<const Options&>())
       .def("IsValid", &Options::IsValid)
       .def_property(
           "callbacks",
@@ -131,8 +132,9 @@ void BindSolver(py::module& m) {
   MakeDataclass(PyOptions);
 
   using Summary = ceres::Solver::Summary;
-  py::class_<Summary> PySummary(m, "SolverSummary");
+  py::class_<Summary, std::shared_ptr<Summary>> PySummary(m, "SolverSummary");
   PySummary.def(py::init<>())
+      .def(py::init<const Summary&>())
       .def("BriefReport", &Summary::BriefReport)
       .def("FullReport", &Summary::FullReport)
       .def("IsSolutionUsable", &Summary::IsSolutionUsable)
@@ -231,8 +233,10 @@ void BindSolver(py::module& m) {
   MakeDataclass(PySummary);
 
   using IterSummary = ceres::IterationSummary;
-  py::class_<IterSummary> PyIterSummary(m, "IterationSummary");
+  py::class_<IterSummary, std::shared_ptr<IterSummary>> PyIterSummary(
+      m, "IterationSummary");
   PyIterSummary.def(py::init<>())
+      .def(py::init<const IterSummary&>())
       .def_readonly("iteration", &IterSummary::iteration)
       .def_readonly("step_is_valid", &IterSummary::step_is_valid)
       .def_readonly("step_is_nonmonotonic", &IterSummary::step_is_nonmonotonic)
