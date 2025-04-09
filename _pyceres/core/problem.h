@@ -270,7 +270,9 @@ void BindProblem(py::module& m) {
             self.Evaluate(options, nullptr, &residuals, nullptr, nullptr);
             return residuals;
           },
-          py::arg("options") = ceres::Problem::EvaluateOptions())
+          py::arg_v("options",
+                    ceres::Problem::EvaluateOptions(),
+                    "EvaluateOptions()"))
       .def(
           "evaluate_residuals",
           [](ceres::Problem& self,
@@ -291,5 +293,7 @@ void BindProblem(py::module& m) {
             self.Evaluate(options, nullptr, nullptr, nullptr, &jacobian);
             return jacobian;
           },
-          py::arg("options") = ceres::Problem::EvaluateOptions());
+          py::arg_v("options",
+                    ceres::Problem::EvaluateOptions(),
+                    "EvaluateOptions()"));
 }

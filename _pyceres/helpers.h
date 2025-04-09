@@ -20,7 +20,6 @@ typedef SSIZE_T ssize_t;
 #include <unistd.h>
 #endif
 
-using namespace pybind11::literals;
 namespace py = pybind11;
 
 template <typename T>
@@ -195,8 +194,11 @@ std::string CreateSummary(const T& self, bool write_type) {
       std::string value = py::str(attribute);
       if (value.length() > 80 && py::hasattr(attribute, "__len__")) {
         const int length = attribute.attr("__len__")().template cast<int>();
-        value = value.front() + " ... " + std::to_string(length) +
-                " elements ... " + value.back();
+        value = std::string(1, value.front())
+                    .append(" ... ")
+                    .append(std::to_string(length))
+                    .append(" elements ... ")
+                    .append(std::string(1, value.back()));
       }
       ss << " = " << value;
       after_subsummary = false;
@@ -235,7 +237,7 @@ void MakeDataclass(py::class_<T, options...> cls,
                    const std::vector<std::string>& attributes = {}) {
   AddDefaultsToDocstrings(cls);
   if (!py::hasattr(cls, "summary")) {
-    cls.def("summary", &CreateSummary<T>, "write_type"_a = false);
+    cls.def("summary", &CreateSummary<T>, py::arg("write_type") = false);
   }
   cls.def("mergedict", &UpdateFromDict);
   cls.def(
@@ -243,7 +245,7 @@ void MakeDataclass(py::class_<T, options...> cls,
       [attributes](const T& self, const bool recursive) {
         return ConvertToDict(self, attributes, recursive);
       },
-      "recursive"_a = true);
+      py::arg("recursive") = true);
 
   cls.def(py::init([cls](const py::dict& dict) {
     py::object self = cls();
