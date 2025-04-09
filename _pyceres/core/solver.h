@@ -1,5 +1,6 @@
 #pragma once
 
+#include "_pyceres/core/callbacks.h"
 #include "_pyceres/helpers.h"
 #include "_pyceres/logging.h"
 
@@ -9,11 +10,58 @@
 namespace py = pybind11;
 
 void BindSolver(py::module& m) {
-  m.def("solve",
-        py::overload_cast<const ceres::Solver::Options&,
-                          ceres::Problem*,
-                          ceres::Solver::Summary*>(&ceres::Solve),
-        py::call_guard<py::gil_scoped_release>());
+  using IterSummary = ceres::IterationSummary;
+  py::class_<IterSummary, std::shared_ptr<IterSummary>> PyIterSummary(
+      m, "IterationSummary");
+  PyIterSummary.def(py::init<>())
+      .def(py::init<const IterSummary&>())
+      .def_readonly("iteration", &IterSummary::iteration)
+      .def_readonly("step_is_valid", &IterSummary::step_is_valid)
+      .def_readonly("step_is_nonmonotonic", &IterSummary::step_is_nonmonotonic)
+      .def_readonly("step_is_successful", &IterSummary::step_is_successful)
+      .def_readonly("cost", &IterSummary::cost)
+      .def_readonly("cost_change", &IterSummary::cost_change)
+      .def_readonly("gradient_max_norm", &IterSummary::gradient_max_norm)
+      .def_readonly("gradient_norm", &IterSummary::gradient_norm)
+      .def_readonly("step_norm", &IterSummary::step_norm)
+      .def_readonly("relative_decrease", &IterSummary::relative_decrease)
+      .def_readonly("trust_region_radius", &IterSummary::trust_region_radius)
+      .def_readonly("eta", &IterSummary::eta)
+      .def_readonly("step_size", &IterSummary::step_size)
+      .def_readonly("line_search_function_evaluations",
+                    &IterSummary::line_search_function_evaluations)
+      .def_readonly("line_search_gradient_evaluations",
+                    &IterSummary::line_search_gradient_evaluations)
+      .def_readonly("line_search_iterations",
+                    &IterSummary::line_search_iterations)
+      .def_readonly("linear_solver_iterations",
+                    &IterSummary::linear_solver_iterations)
+      .def_readonly("iteration_time_in_seconds",
+                    &IterSummary::iteration_time_in_seconds)
+      .def_readonly("step_solver_time_in_seconds",
+                    &IterSummary::step_solver_time_in_seconds)
+      .def_readonly("cumulative_time_in_seconds",
+                    &IterSummary::cumulative_time_in_seconds);
+
+  py::class_<ceres::IterationCallback,
+             PyIterationCallback /* <--- trampoline*/>(m, "IterationCallback")
+      .def(py::init<>())
+      .def("__call__", &ceres::IterationCallback::operator());
+
+  auto vec_it_cb = py::bind_vector<std::vector<ceres::IterationCallback*>>(
+      m, "ListIterationCallback");
+
+  vec_it_cb.def(
+      py::init<>([](py::list list) {
+        std::vector<ceres::IterationCallback*> callbacks;
+        for (auto& handle : list) {
+          callbacks.push_back(handle.cast<ceres::IterationCallback*>());
+        }
+        return callbacks;
+      }),
+      py::keep_alive<1, 2>());
+  py::implicitly_convertible<py::list,
+                             std::vector<ceres::IterationCallback*>>();
 
   using Options = ceres::Solver::Options;
   py::class_<Options, std::shared_ptr<Options>> PyOptions(m, "SolverOptions");
@@ -232,36 +280,9 @@ void BindSolver(py::module& m) {
       .def_readwrite("max_lbfgs_rank", &Summary::max_lbfgs_rank);
   MakeDataclass(PySummary);
 
-  using IterSummary = ceres::IterationSummary;
-  py::class_<IterSummary, std::shared_ptr<IterSummary>> PyIterSummary(
-      m, "IterationSummary");
-  PyIterSummary.def(py::init<>())
-      .def(py::init<const IterSummary&>())
-      .def_readonly("iteration", &IterSummary::iteration)
-      .def_readonly("step_is_valid", &IterSummary::step_is_valid)
-      .def_readonly("step_is_nonmonotonic", &IterSummary::step_is_nonmonotonic)
-      .def_readonly("step_is_successful", &IterSummary::step_is_successful)
-      .def_readonly("cost", &IterSummary::cost)
-      .def_readonly("cost_change", &IterSummary::cost_change)
-      .def_readonly("gradient_max_norm", &IterSummary::gradient_max_norm)
-      .def_readonly("gradient_norm", &IterSummary::gradient_norm)
-      .def_readonly("step_norm", &IterSummary::step_norm)
-      .def_readonly("relative_decrease", &IterSummary::relative_decrease)
-      .def_readonly("trust_region_radius", &IterSummary::trust_region_radius)
-      .def_readonly("eta", &IterSummary::eta)
-      .def_readonly("step_size", &IterSummary::step_size)
-      .def_readonly("line_search_function_evaluations",
-                    &IterSummary::line_search_function_evaluations)
-      .def_readonly("line_search_gradient_evaluations",
-                    &IterSummary::line_search_gradient_evaluations)
-      .def_readonly("line_search_iterations",
-                    &IterSummary::line_search_iterations)
-      .def_readonly("linear_solver_iterations",
-                    &IterSummary::linear_solver_iterations)
-      .def_readonly("iteration_time_in_seconds",
-                    &IterSummary::iteration_time_in_seconds)
-      .def_readonly("step_solver_time_in_seconds",
-                    &IterSummary::step_solver_time_in_seconds)
-      .def_readonly("cumulative_time_in_seconds",
-                    &IterSummary::cumulative_time_in_seconds);
+  m.def("solve",
+        py::overload_cast<const ceres::Solver::Options&,
+                          ceres::Problem*,
+                          ceres::Solver::Summary*>(&ceres::Solve),
+        py::call_guard<py::gil_scoped_release>());
 }

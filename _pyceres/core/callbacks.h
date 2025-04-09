@@ -43,27 +43,7 @@ class PyIterationCallback : public ceres::IterationCallback {
 PYBIND11_MAKE_OPAQUE(std::vector<ceres::IterationCallback*>);
 
 void BindCallbacks(py::module& m) {
-  py::class_<ceres::IterationCallback,
-             PyIterationCallback /* <--- trampoline*/>(m, "IterationCallback")
-      .def(py::init<>())
-      .def("__call__", &ceres::IterationCallback::operator());
-
   py::class_<ceres::EvaluationCallback,
              PyEvaluationCallBack /* <--- trampoline*/>(m, "EvaluationCallback")
       .def(py::init<>());
-
-  auto vec_it_cb = py::bind_vector<std::vector<ceres::IterationCallback*>>(
-      m, "ListIterationCallback");
-
-  vec_it_cb.def(
-      py::init<>([](py::list list) {
-        std::vector<ceres::IterationCallback*> callbacks;
-        for (auto& handle : list) {
-          callbacks.push_back(handle.cast<ceres::IterationCallback*>());
-        }
-        return callbacks;
-      }),
-      py::keep_alive<1, 2>());
-  py::implicitly_convertible<py::list,
-                             std::vector<ceres::IterationCallback*>>();
 }
