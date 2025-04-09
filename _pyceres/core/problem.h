@@ -271,9 +271,7 @@ void BindProblem(py::module& m) {
             return residuals;
           },
           py::arg_v("options",
-                    py::arg_v("options",
-                              ceres::Problem::EvaluateOptions(),
-                              "EvaluateOptions()"),
+                    ceres::Problem::EvaluateOptions(),
                     "EvaluateOptions()"))
       .def(
           "evaluate_residuals",
@@ -296,8 +294,6 @@ void BindProblem(py::module& m) {
             return jacobian;
           },
           py::arg_v("options",
-                    py::arg_v("options",
-                              ceres::Problem::EvaluateOptions(),
-                              "EvaluateOptions()"),
+                    ceres::Problem::EvaluateOptions(),
                     "EvaluateOptions()"));
 }
