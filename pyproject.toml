@@ -26,7 +26,7 @@ archs = ["auto64"]
 test-command = "python -c \"import pyceres; print(pyceres.__version__)\""
 
 [tool.cibuildwheel.environment]
-VCPKG_COMMIT_ID = "9b75e789ece3f942159b8500584e35aafe3979ff"
+VCPKG_COMMIT_ID = "0cb95c860ea83aafc1b24350510b30dec535989a"
 
 [tool.cibuildwheel.linux]
 before-all = "{package}/ci/install-ceres-almalinux.sh"
