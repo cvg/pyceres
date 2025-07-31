@@ -98,7 +98,7 @@ jobs:
           echo "VCPKG_INSTALLATION_ROOT=${VCPKG_INSTALLATION_ROOT}" >> "$GITHUB_ENV"
           echo "CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}" >> "$GITHUB_ENV"
 
-          # Fix: cibuildhweel cannot interpolate env variables.
+          # Fix: cibuildwheel cannot interpolate env variables.
           CONFIG_SETTINGS="cmake.define.CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
           CONFIG_SETTINGS="${CONFIG_SETTINGS} cmake.define.VCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}"
           echo "CIBW_CONFIG_SETTINGS_LINUX=${CONFIG_SETTINGS}" >> "$GITHUB_ENV"
@@ -119,11 +119,6 @@ jobs:
 
           CIBW_MANYLINUX_X86_64_IMAGE="quay.io/pypa/manylinux_2_28_x86_64"
           echo "CIBW_MANYLINUX_X86_64_IMAGE=${CIBW_MANYLINUX_X86_64_IMAGE}" >> "$GITHUB_ENV"
-      - name: Install ARM64 Python 3.8
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.8
-        if: runner.os == 'macOS' && runner.arch == 'ARM64' && ${{ matrix.config.arch }} == "arm64"
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.2
         env:
