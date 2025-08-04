@@ -13,7 +13,7 @@ authors = [
 ]
 license = {text = "Apache-2.0"}
 urls = {Repository = "https://github.com/cvg/pyceres"}
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 dependencies = ["numpy"]
 classifiers = [
   "License :: OSI Approved :: Apache Software License",
@@ -21,7 +21,7 @@ classifiers = [
 ]
 
 [tool.cibuildwheel]
-build = "cp3{8,9,10,11,12,13}-{macosx,manylinux,win}*"
+build = "cp3{9,10,11,12,13,14}-{macosx,manylinux,win}*"
 archs = ["auto64"]
 test-command = "python -c \"import pyceres; print(pyceres.__version__)\""
 
