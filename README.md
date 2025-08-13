@@ -37,4 +37,4 @@ Factors may be defined in Python (see [`examples/test_python_cost.py`](./example
 See [`examples/`](./examples/) to use these factors.
 
 ## Credits
-Pyceres was inspired by the work of Nikolaus Mitchell for [ceres_python_bindings](https://github.com/Edwinem/ceres_python_bindings) and is maintained by [Philipp Lindenberger](https://github.com/Phil26AT) and [Paul-Edouard Sarlin](https://psarlin.com/).
+Pyceres was inspired by the work of Nikolaus Mitchell for [ceres_python_bindings](https://github.com/Edwinem/ceres_python_bindings) and is maintained by [Philipp Lindenberger](https://github.com/Phil26AT), [Paul-Edouard Sarlin](https://psarlin.com/), and [Shaohui Liu](https://github.com/B1ueber2y).

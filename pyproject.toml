@@ -4,12 +4,13 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pyceres"
-version = "2.5"
+version = "2.6"
 description="Factor graph optimization with Ceres, in Python"
 readme = "README.md"
 authors = [
-  { name = "Paul-Edouard Sarlin", email = "psarlin@ethz.ch" },
+  { name = "Paul-Edouard Sarlin", email = "paul.edouard.sarlin@gmail.com" },
   { name = "Philipp Lindenberger", email = "plindenbe@ethz.ch" },
+  { name = "Shaohui Liu", email = "b1ueber2y@gmail.com" },
 ]
 license = {text = "Apache-2.0"}
 urls = {Repository = "https://github.com/cvg/pyceres"}
