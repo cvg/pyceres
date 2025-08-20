@@ -8,7 +8,7 @@
 
 namespace py = pybind11;
 
-class PyManifold : public ceres::Manifold {
+class PyManifold : public ceres::Manifold, py::trampoline_self_life_support {
   /* Inherit the constructors */
   using ceres::Manifold::Manifold;
   bool Plus(const double* x,
@@ -57,23 +57,23 @@ class PyManifold : public ceres::Manifold {
 };
 
 void BindManifold(py::module& m) {
-  py::class_<ceres::Manifold, PyManifold /* <--- trampoline*/>(m, "Manifold")
+  py::classh<ceres::Manifold, PyManifold /* <--- trampoline*/>(m, "Manifold")
       .def(py::init<>())
       .def("ambient_size", &ceres::Manifold::AmbientSize)
       .def("tangent_size", &ceres::Manifold::TangentSize);
 
-  py::class_<ceres::EuclideanManifold<ceres::DYNAMIC>, ceres::Manifold>(
+  py::classh<ceres::EuclideanManifold<ceres::DYNAMIC>, ceres::Manifold>(
       m, "EuclideanManifold")
       .def(py::init<int>());
-  py::class_<ceres::SubsetManifold, ceres::Manifold>(m, "SubsetManifold")
+  py::classh<ceres::SubsetManifold, ceres::Manifold>(m, "SubsetManifold")
       .def(py::init<int, const std::vector<int>&>());
-  py::class_<ceres::QuaternionManifold, ceres::Manifold>(m,
+  py::classh<ceres::QuaternionManifold, ceres::Manifold>(m,
                                                          "QuaternionManifold")
       .def(py::init<>());
-  py::class_<ceres::EigenQuaternionManifold, ceres::Manifold>(
+  py::classh<ceres::EigenQuaternionManifold, ceres::Manifold>(
       m, "EigenQuaternionManifold")
       .def(py::init<>());
-  py::class_<ceres::SphereManifold<ceres::DYNAMIC>, ceres::Manifold>(
+  py::classh<ceres::SphereManifold<ceres::DYNAMIC>, ceres::Manifold>(
       m, "SphereManifold")
       .def(py::init<int>());
 }

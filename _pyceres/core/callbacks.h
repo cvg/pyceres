@@ -8,7 +8,8 @@
 namespace py = pybind11;
 
 // Trampoline class so we can create an EvaluationCallback in Python.
-class PyEvaluationCallBack : public ceres::EvaluationCallback {
+class PyEvaluationCallBack : public ceres::EvaluationCallback,
+                             py::trampoline_self_life_support {
  public:
   /* Inherit the constructors */
   using ceres::EvaluationCallback::EvaluationCallback;
@@ -25,7 +26,8 @@ class PyEvaluationCallBack : public ceres::EvaluationCallback {
   }
 };
 
-class PyIterationCallback : public ceres::IterationCallback {
+class PyIterationCallback : public ceres::IterationCallback,
+                            py::trampoline_self_life_support {
  public:
   using ceres::IterationCallback::IterationCallback;
 
@@ -43,7 +45,7 @@ class PyIterationCallback : public ceres::IterationCallback {
 PYBIND11_MAKE_OPAQUE(std::vector<ceres::IterationCallback*>);
 
 void BindCallbacks(py::module& m) {
-  py::class_<ceres::EvaluationCallback,
+  py::classh<ceres::EvaluationCallback,
              PyEvaluationCallBack /* <--- trampoline*/>(m, "EvaluationCallback")
       .def(py::init<>());
 }

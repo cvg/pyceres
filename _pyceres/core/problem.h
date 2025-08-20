@@ -44,7 +44,7 @@ std::unique_ptr<ceres::Problem> CreatePythonProblem() {
 
 void BindProblem(py::module& m) {
   using options = ceres::Problem::Options;
-  py::class_<ceres::Problem::Options>(m, "ProblemOptions")
+  py::classh<ceres::Problem::Options>(m, "ProblemOptions")
       .def(py::init(&CreateProblemOptions))  // Ensures default is that
                                              // Python manages memory
       .def_readonly("cost_function_ownership",
@@ -56,7 +56,7 @@ void BindProblem(py::module& m) {
       .def_readwrite("disable_all_safety_checks",
                      &options::disable_all_safety_checks);
 
-  py::class_<ceres::Problem::EvaluateOptions>(m, "EvaluateOptions")
+  py::classh<ceres::Problem::EvaluateOptions>(m, "EvaluateOptions")
       .def(py::init<>())
       .def(
           "set_parameter_blocks",
@@ -78,9 +78,9 @@ void BindProblem(py::module& m) {
       .def_readwrite("num_threads",
                      &ceres::Problem::EvaluateOptions::num_threads);
 
-  py::class_<ResidualBlockIDWrapper> residual_block_wrapper(m, "ResidualBlock");
+  py::classh<ResidualBlockIDWrapper> residual_block_wrapper(m, "ResidualBlock");
 
-  py::class_<ceres::Problem, std::shared_ptr<ceres::Problem>>(m, "Problem")
+  py::classh<ceres::Problem>(m, "Problem")
       .def(py::init(&CreatePythonProblem))
       .def(py::init<ceres::Problem::Options>())
       .def("num_parameter_blocks", &ceres::Problem::NumParameterBlocks)

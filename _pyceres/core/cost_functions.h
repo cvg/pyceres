@@ -10,7 +10,8 @@ namespace py = pybind11;
 
 // Class which we can use to create a ceres::CostFunction in python.
 // This allows use to create python based cost functions.
-class PyCostFunction : public ceres::CostFunction {
+class PyCostFunction : public ceres::CostFunction,
+                       py::trampoline_self_life_support {
  public:
   // Inherit the constructors.
   using ceres::CostFunction::CostFunction;
@@ -91,7 +92,7 @@ class PyCostFunction : public ceres::CostFunction {
 };
 
 void BindCostFunctions(py::module& m) {
-  py::class_<ceres::CostFunction, PyCostFunction /* <--- trampoline*/>(
+  py::classh<ceres::CostFunction, PyCostFunction /* <--- trampoline*/>(
       m, "CostFunction")
       .def(py::init<>())
       .def("num_residuals", &ceres::CostFunction::num_residuals)

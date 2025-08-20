@@ -38,7 +38,7 @@ py::tuple ConvertCRSToPyTuple(const ceres::CRSMatrix& crsMatrix) {
 
 void BindCRSMatrix(py::module& m) {
   using CRSMatrix = ceres::CRSMatrix;
-  py::class_<CRSMatrix> PyCRSMatrix(m, "CRSMatrix");
+  py::classh<CRSMatrix> PyCRSMatrix(m, "CRSMatrix");
   PyCRSMatrix.def(py::init<>())
       .def_readonly("num_rows", &CRSMatrix::num_rows)
       .def_readonly("num_cols", &CRSMatrix::num_cols)

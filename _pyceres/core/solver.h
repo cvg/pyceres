@@ -11,8 +11,7 @@ namespace py = pybind11;
 
 void BindSolver(py::module& m) {
   using IterSummary = ceres::IterationSummary;
-  py::class_<IterSummary, std::shared_ptr<IterSummary>> PyIterSummary(
-      m, "IterationSummary");
+  py::classh<IterSummary> PyIterSummary(m, "IterationSummary");
   PyIterSummary.def(py::init<>())
       .def(py::init<const IterSummary&>())
       .def_readonly("iteration", &IterSummary::iteration)
@@ -43,7 +42,7 @@ void BindSolver(py::module& m) {
       .def_readonly("cumulative_time_in_seconds",
                     &IterSummary::cumulative_time_in_seconds);
 
-  py::class_<ceres::IterationCallback,
+  py::classh<ceres::IterationCallback,
              PyIterationCallback /* <--- trampoline*/>(m, "IterationCallback")
       .def(py::init<>())
       .def("__call__", &ceres::IterationCallback::operator());
@@ -64,7 +63,7 @@ void BindSolver(py::module& m) {
                              std::vector<ceres::IterationCallback*>>();
 
   using Options = ceres::Solver::Options;
-  py::class_<Options, std::shared_ptr<Options>> PyOptions(m, "SolverOptions");
+  py::classh<Options> PyOptions(m, "SolverOptions");
   PyOptions.def(py::init<>())
       .def(py::init<const Options&>())
       .def("IsValid", &Options::IsValid)
@@ -180,7 +179,7 @@ void BindSolver(py::module& m) {
   MakeDataclass(PyOptions);
 
   using Summary = ceres::Solver::Summary;
-  py::class_<Summary, std::shared_ptr<Summary>> PySummary(m, "SolverSummary");
+  py::classh<Summary> PySummary(m, "SolverSummary");
   PySummary.def(py::init<>())
       .def(py::init<const Summary&>())
       .def("BriefReport", &Summary::BriefReport)
