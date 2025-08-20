@@ -10,7 +10,7 @@ namespace py = pybind11;
 
 void BindCovariance(py::module& m) {
   using Options = ceres::Covariance::Options;
-  py::class_<Options> PyOptions(m, "CovarianceOptions");
+  py::classh<Options> PyOptions(m, "CovarianceOptions");
   PyOptions.def(py::init<>())
       .def_property(
           "num_threads",
@@ -28,7 +28,7 @@ void BindCovariance(py::module& m) {
       .def_readwrite("apply_loss_function", &Options::apply_loss_function);
   MakeDataclass(PyOptions);
 
-  py::class_<ceres::Covariance>(m, "Covariance")
+  py::classh<ceres::Covariance>(m, "Covariance")
       .def(py::init<ceres::Covariance::Options>())
       .def(
           "compute",

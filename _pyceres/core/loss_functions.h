@@ -15,7 +15,8 @@
 namespace py = pybind11;
 
 // Trampoline class so that we can create a LossFunction in Python.
-class PyLossFunction : public ceres::LossFunction {
+class PyLossFunction : public ceres::LossFunction,
+                       py::trampoline_self_life_support {
  public:
   /* Inherit the constructors */
   using ceres::LossFunction::LossFunction;
@@ -86,9 +87,8 @@ std::shared_ptr<ceres::LossFunction> CreateLossFunctionFromDict(py::dict dict) {
 }
 
 void BindLossFunctions(py::module& m) {
-  py::class_<ceres::LossFunction,
-             PyLossFunction /*<--- trampoline*/,
-             std::shared_ptr<ceres::LossFunction>>(m, "LossFunction")
+  py::classh<ceres::LossFunction, PyLossFunction /*<--- trampoline*/>(
+      m, "LossFunction")
       .def(py::init<>())
       .def(py::init(&CreateLossFunctionFromDict))
       .def("evaluate", [](ceres::LossFunction& self, float v) {
@@ -98,23 +98,15 @@ void BindLossFunctions(py::module& m) {
       });
   py::implicitly_convertible<py::dict, ceres::LossFunction>();
 
-  py::class_<ceres::TrivialLoss,
-             ceres::LossFunction,
-             std::shared_ptr<ceres::TrivialLoss>>(m, "TrivialLoss")
+  py::classh<ceres::TrivialLoss, ceres::LossFunction>(m, "TrivialLoss")
       .def(py::init<>());
 
-  py::class_<ceres::HuberLoss,
-             ceres::LossFunction,
-             std::shared_ptr<ceres::HuberLoss>>(m, "HuberLoss")
+  py::classh<ceres::HuberLoss, ceres::LossFunction>(m, "HuberLoss")
       .def(py::init<double>());
 
-  py::class_<ceres::SoftLOneLoss,
-             ceres::LossFunction,
-             std::shared_ptr<ceres::SoftLOneLoss>>(m, "SoftLOneLoss")
+  py::classh<ceres::SoftLOneLoss, ceres::LossFunction>(m, "SoftLOneLoss")
       .def(py::init<double>());
 
-  py::class_<ceres::CauchyLoss,
-             ceres::LossFunction,
-             std::shared_ptr<ceres::CauchyLoss>>(m, "CauchyLoss")
+  py::classh<ceres::CauchyLoss, ceres::LossFunction>(m, "CauchyLoss")
       .def(py::init<double>());
 }
