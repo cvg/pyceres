@@ -17,15 +17,14 @@ jobs:
     strategy:
       matrix:
         config: [
-              {os: ubuntu-latest},
-              {os: macos-13, arch: x86_64},
-              {os: macos-14, arch: arm64},
-              {os: windows-latest},
+              {os: ubuntu-24.04},
+              {os: macos-14, arch: arm64, deploymentTarget: 14.0},
+              {os: windows-2025},
         ]
     env:
       COMPILER_CACHE_VERSION: 1
       COMPILER_CACHE_DIR: ${{ github.workspace }}/compiler-cache
-      MACOSX_DEPLOYMENT_TARGET: 10.12
+      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.config.deploymentTarget }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
