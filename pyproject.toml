@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core>=0.3.3", "pybind11==3.0.0"]
+requires = ["scikit-build-core>=0.3.3", "pybind11==3.0.1"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -27,7 +27,7 @@ archs = ["auto64"]
 test-command = "python -c \"import pyceres; print(pyceres.__version__)\""
 
 [tool.cibuildwheel.environment]
-VCPKG_COMMIT_ID = "0cb95c860ea83aafc1b24350510b30dec535989a"
+VCPKG_COMMIT_ID = "912567f6fdd1883e07b070dcc0aa67cec072042a"
 
 [tool.cibuildwheel.linux]
 before-all = "{package}/ci/install-ceres-almalinux.sh"
