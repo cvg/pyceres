@@ -25,6 +25,14 @@ Alternatively, you can build the Docker image:
 docker build -t pyceres -f Dockerfile .
 ```
 
+### Compatibility with pycolmap
+pyceres Version | Corresponding pycolmap Version(s)
+-- | --
+2.6 | 3.13.0, 3.12.6
+2.5 | 3.12.0 - 3.12.5
+2.4 | 3.11.0
+2.3 | 3.10.0
+
 ## Factor graph optimization
 
 Factors may be defined in Python (see [`examples/test_python_cost.py`](./examples/test_python_cost.py)) or in C++ with associated Python bindings.
