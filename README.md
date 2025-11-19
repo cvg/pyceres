@@ -25,6 +25,19 @@ Alternatively, you can build the Docker image:
 docker build -t pyceres -f Dockerfile .
 ```
 
+### Compatibility Map for PyCeres with COLMAP
+PyCeres Version | Corresponding COLMAP Version(s)
+-- | --
+2.6 | 3.13.0, 3.12.6
+2.5 | 3.12.5, 3.12.4, 3.12.3, 3.12.2, 3.12.1, 3.12.0
+2.4 | 3.11.0
+2.3 | 3.10.0
+
+Often times pyceres and pycolmap are used together, you can install them together in python using pip with the command:
+```sh
+pip install pyceres==2.x pycolmap==3.xx.x
+```
+
 ## Factor graph optimization
 
 Factors may be defined in Python (see [`examples/test_python_cost.py`](./examples/test_python_cost.py)) or in C++ with associated Python bindings.
