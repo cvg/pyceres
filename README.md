@@ -25,11 +25,11 @@ Alternatively, you can build the Docker image:
 docker build -t pyceres -f Dockerfile .
 ```
 
-### Compatibility Map for PyCeres with COLMAP
+### Compatibility with PyCOLMAP
 PyCeres Version | Corresponding COLMAP Version(s)
 -- | --
 2.6 | 3.13.0, 3.12.6
-2.5 | 3.12.5, 3.12.4, 3.12.3, 3.12.2, 3.12.1, 3.12.0
+2.5 | 3.12.0 - 3.12.05
 2.4 | 3.11.0
 2.3 | 3.10.0
 
