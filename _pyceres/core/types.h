@@ -159,4 +159,10 @@ void BindTypes(py::module& m) {
           .value("USER_SUCCESS", ceres::TerminationType::USER_SUCCESS)
           .value("USER_FAILURE", ceres::TerminationType::USER_FAILURE);
   AddStringToEnumConstructor(termt);
+
+  auto ndmt =
+      py::enum_<ceres::NumericDiffMethodType>(m, "NumericDiffMethodType")
+          .value("FORWARD", ceres::NumericDiffMethodType::FORWARD)
+          .value("CENTRAL", ceres::NumericDiffMethodType::CENTRAL);
+  AddStringToEnumConstructor(ndmt);
 }
