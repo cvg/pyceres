@@ -17,6 +17,20 @@ class PyCostFunction : public ceres::CostFunction,
   using ceres::CostFunction::CostFunction;
   using ceres::CostFunction::set_num_residuals;
 
+  void set_use_numeric_diff(bool use_numeric_diff) {
+    use_numeric_diff_ = use_numeric_diff;
+  }
+
+  bool use_numeric_diff() const { return use_numeric_diff_; }
+
+  void set_numeric_diff_method(ceres::NumericDiffMethodType method) {
+    numeric_diff_method_ = method;
+  }
+
+  ceres::NumericDiffMethodType numeric_diff_method() const {
+    return numeric_diff_method_;
+  }
+
   bool Evaluate(double const* const* parameters,
                 double* residuals,
                 double** jacobians) const override {
@@ -26,17 +40,31 @@ class PyCostFunction : public ceres::CostFunction,
     // pointer values
     if (!cached_flag) {
       parameters_vec.reserve(this->parameter_block_sizes().size());
-      jacobians_vec.reserve(this->parameter_block_sizes().size());
       residuals_wrap = py::array_t<double>(num_residuals(), residuals, no_copy);
       for (size_t idx = 0; idx < parameter_block_sizes().size(); ++idx) {
         parameters_vec.emplace_back(py::array_t<double>(
             this->parameter_block_sizes()[idx], parameters[idx], no_copy));
+      }
+      if (jacobians) {
+        jacobians_vec.reserve(this->parameter_block_sizes().size());
+        for (size_t idx = 0; idx < parameter_block_sizes().size(); ++idx) {
+          jacobians_vec.emplace_back(py::array_t<double>(
+              this->parameter_block_sizes()[idx] * num_residuals(),
+              jacobians[idx],
+              no_copy));
+        }
+        cached_jacobians_flag = true;
+      }
+      cached_flag = true;
+    } else if (jacobians && !cached_jacobians_flag) {
+      jacobians_vec.reserve(this->parameter_block_sizes().size());
+      for (size_t idx = 0; idx < parameter_block_sizes().size(); ++idx) {
         jacobians_vec.emplace_back(py::array_t<double>(
             this->parameter_block_sizes()[idx] * num_residuals(),
             jacobians[idx],
             no_copy));
       }
-      cached_flag = true;
+      cached_jacobians_flag = true;
     }
 
     // Check if the pointers have changed and if they have then change them
@@ -51,7 +79,7 @@ class PyCostFunction : public ceres::CostFunction,
             this->parameter_block_sizes()[idx], parameters[idx], no_copy);
       }
     }
-    if (jacobians) {
+    if (jacobians && cached_jacobians_flag) {
       info = jacobians_vec[0].request(true);
       if (info.ptr != jacobians) {
         for (size_t idx = 0; idx < jacobians_vec.size(); ++idx) {
@@ -85,10 +113,15 @@ class PyCostFunction : public ceres::CostFunction,
   mutable std::vector<py::array_t<double>> jacobians_vec;
   // Flag used to determine if the vectors need to be resized.
   mutable bool cached_flag = false;
+  mutable bool cached_jacobians_flag = false;
   // Buffer to contain the residuals pointer.
   mutable py::array_t<double> residuals_wrap;
   // Dummy variable for pybind11 to avoid a copy.
   mutable py::str no_copy;
+
+  bool use_numeric_diff_ = false;
+  ceres::NumericDiffMethodType numeric_diff_method_ =
+      ceres::NumericDiffMethodType::CENTRAL;
 };
 
 void BindCostFunctions(py::module& m) {
@@ -104,6 +137,32 @@ void BindCostFunctions(py::module& m) {
            &ceres::CostFunction::parameter_block_sizes,
            py::return_value_policy::reference)
       .def("set_num_residuals", &PyCostFunction::set_num_residuals)
+      .def(
+          "set_use_numeric_diff",
+          [](ceres::CostFunction& self, bool use_numeric_diff) {
+            auto* py_cost = dynamic_cast<PyCostFunction*>(&self);
+            THROW_CHECK(py_cost);
+            py_cost->set_use_numeric_diff(use_numeric_diff);
+          },
+          py::arg("use_numeric_diff") = true)
+      .def("use_numeric_diff", [](ceres::CostFunction& self) {
+        auto* py_cost = dynamic_cast<PyCostFunction*>(&self);
+        THROW_CHECK(py_cost);
+        return py_cost->use_numeric_diff();
+      })
+      .def(
+          "set_numeric_diff_method",
+          [](ceres::CostFunction& self, ceres::NumericDiffMethodType method) {
+            auto* py_cost = dynamic_cast<PyCostFunction*>(&self);
+            THROW_CHECK(py_cost);
+            py_cost->set_numeric_diff_method(method);
+          },
+          py::arg("method"))
+      .def("numeric_diff_method", [](ceres::CostFunction& self) {
+        auto* py_cost = dynamic_cast<PyCostFunction*>(&self);
+        THROW_CHECK(py_cost);
+        return py_cost->numeric_diff_method();
+      })
       .def("set_parameter_block_sizes",
            [](ceres::CostFunction& myself, std::vector<int32_t>& sizes) {
              for (auto s : sizes) {

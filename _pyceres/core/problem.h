@@ -1,5 +1,6 @@
 #pragma once
 
+#include "_pyceres/core/cost_functions.h"
 #include "_pyceres/core/wrappers.h"
 #include "_pyceres/helpers.h"
 #include "_pyceres/logging.h"
@@ -20,6 +21,51 @@ void SetResidualBlocks(
   for (auto it = residual_block_ids.begin(); it != residual_block_ids.end();
        ++it) {
     self.residual_blocks.push_back(it->id);
+  }
+}
+
+class PyCostFunctionResidualFunctor {
+ public:
+  explicit PyCostFunctionResidualFunctor(py::object cost_obj)
+      : cost_obj_(std::move(cost_obj)),
+        cost_(cost_obj_.cast<PyCostFunction*>()) {}
+
+  bool operator()(double const* const* parameters, double* residuals) const {
+    return cost_->Evaluate(parameters, residuals, nullptr);
+  }
+
+ private:
+  py::object cost_obj_;
+  PyCostFunction* cost_;
+};
+
+template <ceres::NumericDiffMethodType kMethod>
+ceres::CostFunction* MakeNumericDiffCostFunction(PyCostFunction* cost,
+                                                 const py::object& cost_obj) {
+  auto* functor = new PyCostFunctionResidualFunctor(cost_obj);
+  auto* diff_cost = new ceres::DynamicNumericDiffCostFunction<
+      PyCostFunctionResidualFunctor,
+      kMethod>(functor);
+  const auto& sizes = cost->parameter_block_sizes();
+  for (int size : sizes) {
+    diff_cost->AddParameterBlock(size);
+  }
+  diff_cost->SetNumResiduals(cost->num_residuals());
+  return diff_cost;
+}
+
+ceres::CostFunction* CreateNumericDiffCostFunction(PyCostFunction* cost,
+                                                   const py::object& cost_obj) {
+  switch (cost->numeric_diff_method()) {
+    case ceres::NumericDiffMethodType::FORWARD:
+      return MakeNumericDiffCostFunction<ceres::NumericDiffMethodType::FORWARD>(
+          cost, cost_obj);
+    case ceres::NumericDiffMethodType::CENTRAL:
+      return MakeNumericDiffCostFunction<ceres::NumericDiffMethodType::CENTRAL>(
+          cost, cost_obj);
+    default:
+      return MakeNumericDiffCostFunction<ceres::NumericDiffMethodType::CENTRAL>(
+          cost, cost_obj);
   }
 }
 
@@ -218,7 +264,15 @@ void BindProblem(py::module& m) {
               }
               THROW_CHECK_EQ(num_dims, cost->parameter_block_sizes()[i]);
             }
-            ceres::CostFunction* costw = new CostFunctionWrapper(cost);
+            ceres::CostFunction* costw = nullptr;
+            auto* py_cost = dynamic_cast<PyCostFunction*>(cost);
+            if (py_cost && py_cost->use_numeric_diff()) {
+              py::object cost_obj =
+                  py::cast(cost, py::return_value_policy::reference);
+              costw = CreateNumericDiffCostFunction(py_cost, cost_obj);
+            } else {
+              costw = new CostFunctionWrapper(cost);
+            }
             return ResidualBlockIDWrapper(
                 self.AddResidualBlock(costw, loss.get(), pointer_values));
           },
