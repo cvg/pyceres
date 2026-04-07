@@ -3,11 +3,10 @@
 #include "_pyceres/helpers.h"
 #include "_pyceres/logging.h"
 
+#include <Eigen/Core>
 #include <ceres/ceres.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-
-#include <Eigen/Core>
 
 namespace py = pybind11;
 
@@ -64,8 +63,7 @@ class PyProductManifold : public ceres::Manifold {
       const int as = manifolds_[i]->AmbientSize();
       const int ts = manifolds_[i]->TangentSize();
       RowMajorMat block(as, ts);
-      if (!manifolds_[i]->PlusJacobian(x + ambient_offsets_[i],
-                                       block.data())) {
+      if (!manifolds_[i]->PlusJacobian(x + ambient_offsets_[i], block.data())) {
         return false;
       }
       J.block(ambient_offsets_[i], tangent_offsets_[i], as, ts) = block;
