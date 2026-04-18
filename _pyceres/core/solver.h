@@ -66,7 +66,12 @@ void BindSolver(py::module& m) {
   py::classh<Options> PyOptions(m, "SolverOptions");
   PyOptions.def(py::init<>())
       .def(py::init<const Options&>())
-      .def("IsValid", &Options::IsValid)
+      .def("IsValid",
+           [](const Options& self) {
+             std::string error;
+             bool valid = self.IsValid(&error);
+             return std::make_pair(valid, error);
+           })
       .def_property(
           "callbacks",
           [](const Options& self) { return self.callbacks; },
