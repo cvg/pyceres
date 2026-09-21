@@ -67,6 +67,19 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          echo "${{ env.COMPILER_CACHE_DIR }}/bin" >> "${env:GITHUB_PATH}"
+
+          # The Visual Studio generator leaves MSBuild worker nodes running
+          # after the build. They keep the build directory open, which makes
+          # its cleanup fail. Use Ninja for wheel builds and persist the MSVC
+          # developer environment that Ninja needs into the following
+          # cibuildwheel step.
+          & "./ci/enter_vs_dev_shell.ps1"
+          echo "PATH=${env:PATH}" >> "${env:GITHUB_ENV}"
+          echo "INCLUDE=${env:INCLUDE}" >> "${env:GITHUB_ENV}"
+          echo "LIB=${env:LIB}" >> "${env:GITHUB_ENV}"
+          echo "LIBPATH=${env:LIBPATH}" >> "${env:GITHUB_ENV}"
+
           $VCPKG_INSTALLATION_ROOT="${{ github.workspace }}/vcpkg"
           echo "VCPKG_INSTALLATION_ROOT=${VCPKG_INSTALLATION_ROOT}" >> "${env:GITHUB_ENV}"
           $CMAKE_TOOLCHAIN_FILE = "${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake"
@@ -78,6 +91,7 @@ jobs:
           $CMAKE_TOOLCHAIN_FILE = $CMAKE_TOOLCHAIN_FILE.replace('\', '/')
           $CONFIG_SETTINGS = "cmake.define.CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
           $CONFIG_SETTINGS = "${CONFIG_SETTINGS} cmake.define.VCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}"
+          $CONFIG_SETTINGS = "${CONFIG_SETTINGS} cmake.args=-GNinja"
           echo "CIBW_CONFIG_SETTINGS_WINDOWS=${CONFIG_SETTINGS}" >> "${env:GITHUB_ENV}"
           $CIBW_REPAIR_WHEEL_COMMAND = "delvewheel repair -v --add-path ${VCPKG_INSTALLATION_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/bin -w {dest_dir} {wheel}"
           echo "CIBW_REPAIR_WHEEL_COMMAND_WINDOWS=${CIBW_REPAIR_WHEEL_COMMAND}" >> "${env:GITHUB_ENV}"
