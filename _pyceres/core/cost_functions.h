@@ -113,7 +113,8 @@ void BindCostFunctions(py::module& m) {
            })
       .def(
           "evaluate",
-          [](ceres::CostFunction& self, const py::args& parameters) {
+          [](ceres::CostFunction& self,
+             const py::args& parameters) -> py::tuple {
             THROW_CHECK_EQ(parameters.size(),
                            self.parameter_block_sizes().size());
             std::vector<double*> params(parameters.size());
