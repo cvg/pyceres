@@ -3,7 +3,7 @@ set -x -e
 CURRDIR=$(pwd)
 
 brew update
-brew install git cmake ninja llvm gfortran
+brew install git cmake ninja gfortran
 
 # When building lapack-reference, vcpkg/cmake looks for gfortran.
 ln -sf $(which gfortran-14) "$(dirname $(which gfortran-14))/gfortran"
