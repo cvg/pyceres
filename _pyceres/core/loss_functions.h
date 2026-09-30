@@ -86,6 +86,29 @@ std::shared_ptr<ceres::LossFunction> CreateLossFunctionFromDict(py::dict dict) {
   }
 }
 
+class SharedLossFunctionWrapper final : public ceres::LossFunction {
+ public:
+  explicit SharedLossFunctionWrapper(std::shared_ptr<ceres::LossFunction> loss)
+      : loss_(std::move(loss)),
+        wrapper_(THROW_CHECK_NOTNULL(loss_.get()),
+                 ceres::DO_NOT_TAKE_OWNERSHIP) {}
+
+  void Reset(std::shared_ptr<ceres::LossFunction> loss) {
+    THROW_CHECK_NOTNULL(loss.get());
+    THROW_CHECK_NE(loss.get(), this);
+    wrapper_.Reset(loss.get(), ceres::DO_NOT_TAKE_OWNERSHIP);
+    loss_ = std::move(loss);
+  }
+
+  void Evaluate(const double squared_norm, double rho[3]) const override {
+    wrapper_.Evaluate(squared_norm, rho);
+  }
+
+ private:
+  std::shared_ptr<ceres::LossFunction> loss_;
+  ceres::LossFunctionWrapper wrapper_;
+};
+
 void BindLossFunctions(py::module& m) {
   py::classh<ceres::LossFunction, PyLossFunction /*<--- trampoline*/>(
       m, "LossFunction")
@@ -109,4 +132,9 @@ void BindLossFunctions(py::module& m) {
 
   py::classh<ceres::CauchyLoss, ceres::LossFunction>(m, "CauchyLoss")
       .def(py::init<double>());
+
+  py::classh<SharedLossFunctionWrapper, ceres::LossFunction>(
+      m, "LossFunctionWrapper")
+      .def(py::init<std::shared_ptr<ceres::LossFunction>>(), py::arg("loss"))
+      .def("reset", &SharedLossFunctionWrapper::Reset, py::arg("loss"));
 }
