@@ -4,10 +4,94 @@
 #include "_pyceres/helpers.h"
 #include "_pyceres/logging.h"
 
+#include <algorithm>
+
 #include <ceres/ceres.h>
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
+
+// Mutable view of Solver::Options::callbacks. Modifications are applied to
+// the underlying options in place, and every added callback is kept alive for
+// the lifetime of the Python options object.
+class IterationCallbackList {
+ public:
+  explicit IterationCallbackList(py::object options)
+      : options_(std::move(options)) {}
+
+  std::vector<ceres::IterationCallback*>& Callbacks() {
+    return options_.cast<ceres::Solver::Options&>().callbacks;
+  }
+
+  size_t Size() { return Callbacks().size(); }
+
+  ceres::IterationCallback* GetItem(py::ssize_t i) {
+    return Callbacks()[NormalizeIndex(i)];
+  }
+
+  void DelItem(py::ssize_t i) {
+    auto& callbacks = Callbacks();
+    callbacks.erase(callbacks.begin() + NormalizeIndex(i));
+  }
+
+  void Append(py::object callback) { Callbacks().push_back(Retain(callback)); }
+
+  void Insert(py::ssize_t i, py::object callback) {
+    auto& callbacks = Callbacks();
+    const py::ssize_t size = callbacks.size();
+    if (i < 0) i = std::max<py::ssize_t>(i + size, 0);
+    i = std::min(i, size);
+    callbacks.insert(callbacks.begin() + i, Retain(callback));
+  }
+
+  void Extend(py::iterable iterable) {
+    // Convert everything first so that a failed cast leaves the list intact.
+    std::vector<ceres::IterationCallback*> new_callbacks;
+    for (auto& handle : iterable) {
+      new_callbacks.push_back(
+          Retain(py::reinterpret_borrow<py::object>(handle)));
+    }
+    auto& callbacks = Callbacks();
+    callbacks.insert(
+        callbacks.end(), new_callbacks.begin(), new_callbacks.end());
+  }
+
+  void Assign(py::iterable iterable) {
+    std::vector<ceres::IterationCallback*> new_callbacks;
+    for (auto& handle : iterable) {
+      new_callbacks.push_back(
+          Retain(py::reinterpret_borrow<py::object>(handle)));
+    }
+    Callbacks() = std::move(new_callbacks);
+  }
+
+  void Clear() { Callbacks().clear(); }
+
+  py::list ToList() {
+    py::list list;
+    for (ceres::IterationCallback* callback : Callbacks()) {
+      list.append(py::cast(callback, py::return_value_policy::reference));
+    }
+    return list;
+  }
+
+ private:
+  size_t NormalizeIndex(py::ssize_t i) {
+    const py::ssize_t size = Callbacks().size();
+    if (i < 0) i += size;
+    if (i < 0 || i >= size) throw py::index_error();
+    return static_cast<size_t>(i);
+  }
+
+  ceres::IterationCallback* Retain(const py::object& callback) {
+    ceres::IterationCallback* ptr = callback.cast<ceres::IterationCallback*>();
+    THROW_CHECK_NOTNULL(ptr);
+    py::detail::keep_alive_impl(options_, callback);
+    return ptr;
+  }
+
+  py::object options_;
+};
 
 void BindSolver(py::module& m) {
   using IterSummary = ceres::IterationSummary;
@@ -62,6 +146,23 @@ void BindSolver(py::module& m) {
   py::implicitly_convertible<py::list,
                              std::vector<ceres::IterationCallback*>>();
 
+  py::classh<IterationCallbackList>(m, "IterationCallbackList")
+      .def("__len__", &IterationCallbackList::Size)
+      .def("__getitem__",
+           &IterationCallbackList::GetItem,
+           py::return_value_policy::reference)
+      .def("__delitem__", &IterationCallbackList::DelItem)
+      .def("__iter__",
+           [](IterationCallbackList& self) { return py::iter(self.ToList()); })
+      .def("append", &IterationCallbackList::Append)
+      .def("extend", &IterationCallbackList::Extend)
+      .def("insert", &IterationCallbackList::Insert)
+      .def("clear", &IterationCallbackList::Clear)
+      .def("__repr__", [](IterationCallbackList& self) {
+        return "IterationCallbackList(" +
+               py::repr(self.ToList()).cast<std::string>() + ")";
+      });
+
   using Options = ceres::Solver::Options;
   py::classh<Options> PyOptions(m, "SolverOptions");
   PyOptions.def(py::init<>())
@@ -74,16 +175,10 @@ void BindSolver(py::module& m) {
            })
       .def_property(
           "callbacks",
-          [](const Options& self) { return self.callbacks; },
-          py::cpp_function(
-              [](Options& self, py::list list) {
-                std::vector<ceres::IterationCallback*> callbacks;
-                for (auto& handle : list) {
-                  self.callbacks.push_back(
-                      handle.cast<ceres::IterationCallback*>());
-                }
-              },
-              py::keep_alive<1, 2>()))
+          [](py::object self) { return IterationCallbackList(self); },
+          [](py::object self, py::iterable iterable) {
+            IterationCallbackList(self).Assign(iterable);
+          })
       .def_readwrite("minimizer_type", &Options::minimizer_type)
       .def_readwrite("line_search_direction_type",
                      &Options::line_search_direction_type)
